@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"vestramaximus/internal/models" // Add models import
 
@@ -231,3 +232,214 @@ func GetAccounts() ([]models.Account, error) {
 }
 
 // // TODO: Add functions for UpdateAccount, DeleteAccount, GetAccountByID later
+
+// AddCategory inserts a new category into the database.
+func AddCategory(category models.Category) (models.Category, error) {
+	db := GetDB()
+	// Handle nullable ParentCategoryID
+	var parentID sql.NullInt64
+	if category.ParentCategoryID != nil {
+		parentID = sql.NullInt64{Int64: *category.ParentCategoryID, Valid: true}
+	} else {
+		parentID = sql.NullInt64{Valid: false}
+	}
+
+	stmt, err := db.Prepare("INSERT INTO categories(name, type, parent_category_id) VALUES(?, ?, ?)")
+	if err != nil {
+		log.Printf("Error preparing add category statement: %v", err)
+		return models.Category{}, err
+	}
+	defer stmt.Close()
+
+	res, err := stmt.Exec(category.Name, category.Type, parentID)
+	if err != nil {
+		log.Printf("Error executing add category statement: %v", err)
+		// Consider checking for unique constraint violation here if needed
+		return models.Category{}, err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		log.Printf("Error getting last insert ID for category: %v", err)
+		return models.Category{}, err
+	}
+	category.ID = id
+	log.Printf("Category added successfully with ID: %d", id)
+	return category, nil
+}
+
+// GetCategories retrieves all categories from the database.
+func GetCategories() ([]models.Category, error) {
+	db := GetDB()
+	// Query includes parent_category_id which can be NULL
+	rows, err := db.Query("SELECT id, name, type, parent_category_id FROM categories ORDER BY name ASC")
+	if err != nil {
+		log.Printf("Error querying categories: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var categories []models.Category
+	for rows.Next() {
+		var cat models.Category
+		var parentID sql.NullInt64 // Use sql.NullInt64 for nullable parent_category_id
+
+		// Note: We are not scanning created_at/updated_at yet
+		if err := rows.Scan(&cat.ID, &cat.Name, &cat.Type, &parentID); err != nil {
+			log.Printf("Error scanning category row: %v", err)
+			return nil, err
+		}
+
+		// Assign parent ID only if it's valid (not NULL in the database)
+		if parentID.Valid {
+			cat.ParentCategoryID = &parentID.Int64
+		} else {
+			cat.ParentCategoryID = nil
+		}
+
+		categories = append(categories, cat)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Printf("Error after iterating category rows: %v", err)
+		return nil, err
+	}
+
+	log.Printf("Retrieved %d categories", len(categories))
+	return categories, nil
+}
+
+// // TODO: Add functions for UpdateCategory, DeleteCategory, GetCategoryByID later
+
+// AddTransaction inserts a new transaction and updates the corresponding account balance.
+// It uses a database transaction to ensure atomicity.
+func AddTransaction(transaction models.Transaction) (models.Transaction, error) {
+	db := GetDB()
+	tx, err := db.Begin() // Start transaction
+	if err != nil {
+		log.Printf("Error starting transaction for AddTransaction: %v", err)
+		return models.Transaction{}, err
+	}
+	// Defer rollback in case of errors - it's a no-op if Commit() succeeds
+	defer tx.Rollback()
+
+	// 1. Insert the transaction
+	stmtInsert, err := tx.Prepare(`
+		INSERT INTO transactions(date, amount, type, description, category_id, account_id, notes, status)
+		VALUES(?, ?, ?, ?, ?, ?, ?, ?) `)
+	if err != nil {
+		log.Printf("Error preparing insert transaction statement: %v", err)
+		return models.Transaction{}, err
+	}
+	defer stmtInsert.Close() // Close even though it's within a transaction context for good practice
+
+	// Format time for SQLite (YYYY-MM-DD HH:MM:SS)
+	dateStr := transaction.Date.UTC().Format("2006-01-02 15:04:05")
+
+	res, err := stmtInsert.Exec(
+		dateStr,
+		transaction.Amount,
+		transaction.Type,
+		transaction.Description,
+		transaction.CategoryID,
+		transaction.AccountID,
+		transaction.Notes,
+		transaction.Status,
+	)
+	if err != nil {
+		log.Printf("Error executing insert transaction statement: %v", err)
+		return models.Transaction{}, err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		log.Printf("Error getting last insert ID for transaction: %v", err)
+		return models.Transaction{}, err
+	}
+	transaction.ID = id
+
+	// 2. Update the account balance
+	stmtUpdate, err := tx.Prepare("UPDATE accounts SET current_balance = current_balance + ? WHERE id = ?")
+	if err != nil {
+		log.Printf("Error preparing update account balance statement: %v", err)
+		return models.Transaction{}, err
+	}
+	defer stmtUpdate.Close()
+
+	// Amount is added directly (it's negative for expenses, positive for income)
+	_, err = stmtUpdate.Exec(transaction.Amount, transaction.AccountID)
+	if err != nil {
+		log.Printf("Error executing update account balance statement: %v", err)
+		return models.Transaction{}, err
+	}
+
+	// 3. Commit the transaction
+	if err = tx.Commit(); err != nil {
+		log.Printf("Error committing transaction for AddTransaction: %v", err)
+		return models.Transaction{}, err
+	}
+
+	log.Printf("Transaction added successfully with ID: %d and account %d balance updated.", transaction.ID, transaction.AccountID)
+	return transaction, nil
+}
+
+// GetTransactions retrieves all transactions, ordered by date descending.
+func GetTransactions() ([]models.Transaction, error) {
+	db := GetDB()
+	// Select transactions, ordering by date descending for typical display
+	rows, err := db.Query(`
+		SELECT id, date, amount, type, description, category_id, account_id, notes, status
+		FROM transactions
+		ORDER BY date DESC, id DESC`) // Order by ID as secondary sort for same-day transactions
+	if err != nil {
+		log.Printf("Error querying transactions: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var transactions []models.Transaction
+	for rows.Next() {
+		var t models.Transaction
+		var dateStr string // Read date as string first
+
+		// Note: We are not scanning created_at/updated_at yet
+		err := rows.Scan(
+			&t.ID,
+			&dateStr, // Scan into string
+			&t.Amount,
+			&t.Type,
+			&t.Description, // Need to handle potential NULL description if schema allows
+			&t.CategoryID,
+			&t.AccountID,
+			&t.Notes, // Need to handle potential NULL notes if schema allows
+			&t.Status,
+		)
+		if err != nil {
+			log.Printf("Error scanning transaction row: %v", err)
+			return nil, err
+		}
+
+		// Parse the date string (assuming UTC, adjust if using local time)
+		// SQLite stores dates typically as TEXT in "YYYY-MM-DD HH:MM:SS" format
+		parsedTime, timeErr := time.Parse("2006-01-02 15:04:05", dateStr)
+		if timeErr != nil {
+			log.Printf("Error parsing date string '%s' for transaction ID %d: %v", dateStr, t.ID, timeErr)
+			// Decide how to handle parse errors - skip transaction? return error? For now, log and continue
+			continue
+		}
+		t.Date = parsedTime
+
+		transactions = append(transactions, t)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Printf("Error after iterating transaction rows: %v", err)
+		return nil, err
+	}
+
+	log.Printf("Retrieved %d transactions", len(transactions))
+	return transactions, nil
+}
+
+// // TODO: Add functions for UpdateTransaction, DeleteTransaction, GetTransactionByID later
+// // Note: Deleting/Updating transactions will also require updating account balance in reverse/differentially.

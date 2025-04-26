@@ -10,14 +10,14 @@
 - [x] Initial Run (`wails dev` / `wails dev -tags webkit2_41`)
 - [x] Initialize Git Repo & Initial Commit
 
-## Phase 1: Core Data Models & Database Setup (Go Backend)
+## Phase 1: Core Data Models & Database Setup (Go Backend) (DONE)
 
-- [ ] Define Core Go Structs (`Account`, `Category`, `Transaction`)
-- [ ] Setup SQLite (add driver, create `internal/database` package)
-- [ ] Implement DB Initialization Logic (create tables if not exist)
-- [ ] Basic CRUD Functions (Go) for `Account`, `Category` (Create, Read)
-- [ ] Basic Functions (Go) for `Transaction` (Create, Read)
-- [ ] Expose necessary Go functions to Frontend (Wails Binding)
+- [x] Define Core Go Structs (`Account`, `Category`, `Transaction`)
+- [x] Setup SQLite (add driver, create `internal/database` package)
+- [x] Implement DB Initialization Logic (create tables if not exist)
+- [x] Basic CRUD Functions (Go) for `Account`, `Category` (Create, Read)
+- [x] Basic Functions (Go) for `Transaction` (Create, Read)
+- [x] Expose necessary Go functions to Frontend (Wails Binding)
 
 ## Phase 2: Basic UI Shell & Account/Category Management (React Frontend)
 
