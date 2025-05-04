@@ -1,3 +1,69 @@
+/* Keep existing styles from Wails template if desired, or replace */
+
+/* Basic App Layout */
+.app-container {
+  display: flex;
+  height: 100vh; /* Full viewport height */
+  width: 100vw;  /* Full viewport width */
+  overflow: hidden; /* Prevent scrolling on the main container */
+  background-color: #f4f7f6; /* Light background for the app */
+  color: #333;
+}
+
+.sidebar {
+  width: 220px; /* Fixed width for the sidebar */
+  background-color: #2c3e50; /* Dark sidebar background */
+  color: #ecf0f1; /* Light text for sidebar */
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto; /* Allow scrolling if content overflows */
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+.sidebar h2 {
+  margin-top: 0;
+  margin-bottom: 30px;
+  text-align: center;
+  color: #ffffff;
+}
+
+.sidebar nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar nav li {
+  padding: 10px 0;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-bottom: 5px;
+  padding-left: 10px;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar nav li:hover {
+  background-color: #34495e; /* Slightly lighter background on hover */
+}
+
+
+.main-content {
+  flex-grow: 1; /* Take up remaining space */
+  padding: 30px;
+  height: 100%;
+  overflow-y: auto; /* Allow scrolling for main content */
+}
+
+/* You might want to reset some default browser styles in style.css or here */
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif; /* Basic font */
+}
+
+/* ====== Existing styles from template below (can be removed or kept) ====== */
+
+/* Default App.css content - remove or merge as needed */
 #app {
     height: 100vh;
     text-align: center;

@@ -1,28 +1,60 @@
-import {useState} from 'react';
-import logo from './assets/images/logo-universal.png';
+import { useState } from 'react';
 import './App.css';
-import {Greet} from "../wailsjs/go/main/App";
+import AccountsPage from './pages/AccountsPage';
+
+// Define possible views/pages
+type View = 'Dashboard' | 'Accounts' | 'Categories' | 'Transactions' | 'Budgets' | 'Reports' | 'Settings';
 
 function App() {
-    const [resultText, setResultText] = useState("Please enter your name below 👇");
-    const [name, setName] = useState('');
-    const updateName = (e: any) => setName(e.target.value);
-    const updateResultText = (result: string) => setResultText(result);
+    // State to track the current active view
+    const [currentView, setCurrentView] = useState<View>('Dashboard'); // Default view
 
-    function greet() {
-        Greet(name).then(updateResultText);
-    }
+    // Function to render the component based on the current view
+    const renderView = () => {
+        switch (currentView) {
+            case 'Accounts':
+                return <AccountsPage />;
+            case 'Categories':
+                // Placeholder - create CategoriesPage.tsx later
+                return <div>Categories Page Content</div>;
+            case 'Transactions':
+                 // Placeholder - create TransactionsPage.tsx later
+                return <div>Transactions Page Content</div>;
+            // Add cases for other views later
+            case 'Dashboard':
+            default:
+                return (
+                    <div>
+                        <h1>Welcome!</h1>
+                        <p>Select an option from the sidebar.</p>
+                    </div>
+                );
+        }
+    };
 
     return (
-        <div id="App">
-            <img src={logo} id="logo" alt="logo"/>
-            <div id="result" className="result">{resultText}</div>
-            <div id="input" className="input-box">
-                <input id="name" className="input" onChange={updateName} autoComplete="off" name="input" type="text"/>
-                <button className="btn" onClick={greet}>Greet</button>
+        <div id="app" className="app-container">
+            <div className="sidebar">
+                <h2>VestraMaximus</h2>
+                <nav>
+                    <ul>
+                        {/* Update list items to set the view on click */}
+                        <li onClick={() => setCurrentView('Dashboard')}>Dashboard</li>
+                        <li onClick={() => setCurrentView('Accounts')}>Accounts</li>
+                        <li onClick={() => setCurrentView('Categories')}>Categories</li>
+                        <li onClick={() => setCurrentView('Transactions')}>Transactions</li>
+                        <li onClick={() => setCurrentView('Budgets')}>Budgets</li>
+                        <li onClick={() => setCurrentView('Reports')}>Reports</li>
+                        <li onClick={() => setCurrentView('Settings')}>Settings</li>
+                    </ul>
+                </nav>
+            </div>
+            <div className="main-content">
+                {/* Render the component based on the current view state */}
+                {renderView()}
             </div>
         </div>
-    )
+    );
 }
 
-export default App
+export default App;
