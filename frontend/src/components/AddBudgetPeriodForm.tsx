@@ -59,10 +59,10 @@ const AddBudgetPeriodForm: React.FC<AddBudgetPeriodFormProps> = ({ onBudgetPerio
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <div>
-        <label htmlFor="bp-name">Name:</label>
+    <form onSubmit={handleSubmit} className="sub-form">
+      {error && <p className="form-error\">{error}</p>}
+      <div className="form-group">
+        <label htmlFor="bp-name\">Name:</label>
         <input
           id="bp-name"
           type="text"
@@ -71,43 +71,46 @@ const AddBudgetPeriodForm: React.FC<AddBudgetPeriodFormProps> = ({ onBudgetPerio
           required
         />
       </div>
-      <div>
-        <label htmlFor="bp-start-date">Start Date:</label>
-        <input
-          id="bp-start-date"
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          required
-        />
+      <div className="form-row"> {/* This div groups date inputs */}
+        <div className="form-group">
+          <label htmlFor="bp-start-date\">Start Date:</label>
+          <input
+            id="bp-start-date"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label htmlFor="bp-end-date\">End Date:</label>
+          <input
+            id="bp-end-date"
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            required
+          />
+        </div>
       </div>
-      <div>
-        <label htmlFor="bp-end-date">End Date:</label>
-        <input
-          id="bp-end-date"
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          required
-        />
-      </div>
-      <div>
-        <label htmlFor="bp-status">Status:</label>
-        <select 
-          id="bp-status" 
-          value={status} 
+      <div className="form-group">
+        <label htmlFor="bp-status\">Status:</label>
+        <select
+          id="bp-status"
+          value={status}
           onChange={(e) => setStatus(e.target.value)}
+          required
         >
-          <option value="Open">Open</option>
-          <option value="Closed">Closed</option>
-          <option value="Archived">Archived</option>
+          <option value="Open\">Open</option>
+          <option value="Closed\">Closed</option>
+          <option value="Archived\">Archived</option>
         </select>
       </div>
-      <button type="submit" disabled={isSubmitting}>
+      <button type="submit" disabled={isSubmitting} className="btn btn-primary">
         {isSubmitting ? 'Adding...' : 'Add Budget Period'}
       </button>
     </form>
   );
 };
 
-export default AddBudgetPeriodForm; 
+export default AddBudgetPeriodForm;

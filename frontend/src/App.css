@@ -379,6 +379,22 @@ body, html {
   border-color: #545b62;
 }
 
+.btn-primary {
+  background-color: #27ae60; /* Green - matches existing add account form */
+  color: white;
+  border: 1px solid #27ae60;
+}
+.btn-primary:hover {
+  background-color: #229954;
+  border-color: #1e8449;
+}
+.btn-primary:disabled {
+  background-color: #bdc3c7;
+  border-color: #bdc3c7;
+  color: #7f8c8d;
+  cursor: not-allowed;
+}
+
 /* BudgetPeriodItem Styles */
 .budget-period-list {
   display: flex;
@@ -447,4 +463,33 @@ body, html {
   background-color: #e2e3e5; /* Light grey */
   color: #383d41; /* Dark grey */
   border: 1px solid #d6d8db;
+}
+
+/* Styles for inline form groups (e.g., start and end date) */
+.form-row {
+  display: flex;
+  gap: 15px; /* Space between the inline form groups */
+  align-items: flex-start; /* Align items to the start, useful if labels make one taller */
+}
+
+.form-row .form-group {
+  flex: 1; /* Allows each form group to take equal width */
+  margin-bottom: 15px; /* Retain original bottom margin for consistency, or set to 0 if preferred */
+}
+
+/* Ensure inputs within a form-row take full width of their container */
+.form-row .form-group input[type="date"],
+.form-row .form-group input[type="text"],
+.form-row .form-group select {
+  width: 100%; /* Overrides the calc(100% - 20px) for items in a row */
+  /* If you used box-sizing: border-box; on inputs originally, width: 100% is fine.
+     Otherwise, you might need to adjust for padding if it causes overflow.
+     The existing rule `width: calc(100% - 20px);` and `padding: 10px;`
+     implies a box-sizing other than border-box or a desire for internal padding.
+     Let's assume border-box for simplicity with width: 100%
+     and if not, the user can adjust.
+     Given `.form-group input[type="text"], .form-group input[type="number"], .form-group select`
+     has `width: calc(100% - 20px); padding: 10px; box-sizing: border-box;`,
+     then `width: 100%` should be fine.
+  */
 }
