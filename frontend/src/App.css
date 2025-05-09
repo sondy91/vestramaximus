@@ -226,3 +226,30 @@ body, html {
   border-radius: 4px;
   margin-bottom: 15px;
 }
+
+/* Styles for general pages within main-content */
+.page {
+  background-color: #FFFACD; /* Lemon Chiffon - very visible */
+  color: #000000; /* Black text */
+  padding: 20px;
+  height: 100%; /* Ensure it tries to fill vertical space */
+  box-sizing: border-box;
+}
+
+/* Styles for clickable table rows */
+.clickable-table tbody tr {
+  cursor: pointer;
+}
+
+.clickable-table tbody tr:hover {
+  background-color: #e9ecef; /* Light grey, consistent with other hover effects */
+}
+
+.clickable-table tbody tr.selected-row {
+  background-color: #cfe2ff; /* A light blue to indicate selection */
+  font-weight: bold;
+}
+
+.clickable-table tbody tr.selected-row:hover {
+  background-color: #b9d4fb; /* Slightly darker blue on hover for selected row */
+}

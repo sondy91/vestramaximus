@@ -3,6 +3,7 @@ import './App.css';
 import AccountsPage from './pages/AccountsPage';
 import CategoriesPage from './pages/CategoriesPage';
 import TransactionsPage from './pages/TransactionsPage';
+import BudgetPage from './pages/BudgetPage';
 
 // Define possible views/pages
 type View = 'Dashboard' | 'Accounts' | 'Categories' | 'Transactions' | 'Budgets' | 'Reports' | 'Settings';
@@ -20,6 +21,8 @@ function App() {
                 return <CategoriesPage />;
             case 'Transactions':
                 return <TransactionsPage />;
+            case 'Budgets':
+                return <BudgetPage />;
             // Add cases for other views later
             case 'Dashboard':
             default:
