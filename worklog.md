@@ -19,13 +19,13 @@
 - [x] Basic Functions (Go) for `Transaction` (Create, Read)
 - [x] Expose necessary Go functions to Frontend (Wails Binding)
 
-## Phase 2: Basic UI Shell & Account/Category Management (React Frontend)
+## Phase 2: Basic UI Shell & Account/Category Management (React Frontend) (DONE)
 
-- [ ] Basic Layout (Sidebar, Content Area)
-- [ ] Account Management UI (List, Add/Edit Form)
-- [ ] Connect Account UI to Go backend functions
-- [ ] Category Management UI (List, Add/Edit Form)
-- [ ] Connect Category UI to Go backend functions
+- [x] Basic Layout (Sidebar, Content Area)
+- [x] Account Management UI (List, Add/Edit Form) - Add done, Edit later
+- [x] Connect Account UI to Go backend functions
+- [x] Category Management UI (List, Add/Edit Form) - Add done, Edit later
+- [x] Connect Category UI to Go backend functions
 
 ## Phase 3: Manual Transaction Entry & Listing
 

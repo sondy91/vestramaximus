@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import './App.css';
 import AccountsPage from './pages/AccountsPage';
+import CategoriesPage from './pages/CategoriesPage';
 
 // Define possible views/pages
 type View = 'Dashboard' | 'Accounts' | 'Categories' | 'Transactions' | 'Budgets' | 'Reports' | 'Settings';
@@ -15,8 +16,7 @@ function App() {
             case 'Accounts':
                 return <AccountsPage />;
             case 'Categories':
-                // Placeholder - create CategoriesPage.tsx later
-                return <div>Categories Page Content</div>;
+                return <CategoriesPage />;
             case 'Transactions':
                  // Placeholder - create TransactionsPage.tsx later
                 return <div>Transactions Page Content</div>;
