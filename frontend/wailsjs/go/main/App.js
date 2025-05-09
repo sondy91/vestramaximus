@@ -6,6 +6,14 @@ export function AddAccount(arg1, arg2, arg3) {
   return window['go']['main']['App']['AddAccount'](arg1, arg2, arg3);
 }
 
+export function AddBudgetAllocation(arg1, arg2, arg3) {
+  return window['go']['main']['App']['AddBudgetAllocation'](arg1, arg2, arg3);
+}
+
+export function AddBudgetPeriod(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['AddBudgetPeriod'](arg1, arg2, arg3, arg4);
+}
+
 export function AddCategory(arg1, arg2, arg3) {
   return window['go']['main']['App']['AddCategory'](arg1, arg2, arg3);
 }
@@ -14,8 +22,24 @@ export function AddTransaction(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
   return window['go']['main']['App']['AddTransaction'](arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
 }
 
+export function DeleteBudgetAllocation(arg1) {
+  return window['go']['main']['App']['DeleteBudgetAllocation'](arg1);
+}
+
 export function GetAccounts() {
   return window['go']['main']['App']['GetAccounts']();
+}
+
+export function GetBudgetAllocation(arg1, arg2) {
+  return window['go']['main']['App']['GetBudgetAllocation'](arg1, arg2);
+}
+
+export function GetBudgetAllocationsByBudgetPeriodID(arg1) {
+  return window['go']['main']['App']['GetBudgetAllocationsByBudgetPeriodID'](arg1);
+}
+
+export function GetBudgetPeriods() {
+  return window['go']['main']['App']['GetBudgetPeriods']();
 }
 
 export function GetCategories() {
@@ -28,4 +52,8 @@ export function GetTransactions() {
 
 export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
+}
+
+export function UpdateBudgetAllocation(arg1, arg2) {
+  return window['go']['main']['App']['UpdateBudgetAllocation'](arg1, arg2);
 }

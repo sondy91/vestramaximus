@@ -4,14 +4,28 @@ import {models} from '../models';
 
 export function AddAccount(arg1:string,arg2:string,arg3:number):Promise<models.Account>;
 
+export function AddBudgetAllocation(arg1:number,arg2:number,arg3:number):Promise<models.BudgetAllocation>;
+
+export function AddBudgetPeriod(arg1:string,arg2:string,arg3:string,arg4:string):Promise<models.BudgetPeriod>;
+
 export function AddCategory(arg1:string,arg2:string,arg3:any):Promise<models.Category>;
 
 export function AddTransaction(arg1:string,arg2:number,arg3:string,arg4:string,arg5:number,arg6:number,arg7:string,arg8:string):Promise<models.Transaction>;
 
+export function DeleteBudgetAllocation(arg1:number):Promise<void>;
+
 export function GetAccounts():Promise<Array<models.Account>>;
+
+export function GetBudgetAllocation(arg1:number,arg2:number):Promise<models.BudgetAllocation>;
+
+export function GetBudgetAllocationsByBudgetPeriodID(arg1:number):Promise<Array<models.BudgetAllocation>>;
+
+export function GetBudgetPeriods():Promise<Array<models.BudgetPeriod>>;
 
 export function GetCategories():Promise<Array<models.Category>>;
 
 export function GetTransactions():Promise<Array<models.Transaction>>;
 
 export function Greet(arg1:string):Promise<string>;
+
+export function UpdateBudgetAllocation(arg1:number,arg2:number):Promise<models.BudgetAllocation>;

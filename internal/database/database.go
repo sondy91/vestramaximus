@@ -117,6 +117,30 @@ func createTables() error {
 		FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE -- If account is deleted, delete its transactions
 	);`
 
+	budgetPeriodsTableSQL := `
+	CREATE TABLE IF NOT EXISTS budget_periods (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL UNIQUE,
+		start_date TEXT NOT NULL,
+		end_date TEXT NOT NULL,
+		status TEXT NOT NULL DEFAULT 'Open', -- 'Open', 'Closed', 'Archived'
+		created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+		updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+	);`
+
+	budgetAllocationsTableSQL := `
+	CREATE TABLE IF NOT EXISTS budget_allocations (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		budget_period_id INTEGER NOT NULL,
+		category_id INTEGER NOT NULL,
+		allocated_amount REAL NOT NULL DEFAULT 0,
+		created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+		updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (budget_period_id) REFERENCES budget_periods(id) ON DELETE CASCADE,
+		FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
+		UNIQUE (budget_period_id, category_id) -- Ensure a category is allocated only once per period
+	);`
+
 	// Trigger to update `updated_at` timestamp (Example for accounts table)
 	// Similar triggers can be added for other tables if needed.
 	triggerAccountsSQL := `
@@ -140,14 +164,32 @@ func createTables() error {
 	BEGIN
 		UPDATE transactions SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
 	END;`
+	triggerBudgetPeriodsSQL := `
+	CREATE TRIGGER IF NOT EXISTS update_budget_periods_updated_at
+	AFTER UPDATE ON budget_periods
+	FOR EACH ROW
+	BEGIN
+		UPDATE budget_periods SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
+	END;`
+	triggerBudgetAllocationsSQL := `
+	CREATE TRIGGER IF NOT EXISTS update_budget_allocations_updated_at
+	AFTER UPDATE ON budget_allocations
+	FOR EACH ROW
+	BEGIN
+		UPDATE budget_allocations SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
+	END;`
 
 	statements := []string{
 		accountsTableSQL,
 		categoriesTableSQL,
 		transactionsTableSQL,
+		budgetPeriodsTableSQL,
+		budgetAllocationsTableSQL,
 		triggerAccountsSQL,
 		triggerCategoriesSQL,
 		triggerTransactionsSQL,
+		triggerBudgetPeriodsSQL,
+		triggerBudgetAllocationsSQL,
 	}
 
 	tx, err := db.Begin()
@@ -443,3 +485,221 @@ func GetTransactions() ([]models.Transaction, error) {
 
 // // TODO: Add functions for UpdateTransaction, DeleteTransaction, GetTransactionByID later
 // // Note: Deleting/Updating transactions will also require updating account balance in reverse/differentially.
+
+// AddBudgetPeriod inserts a new budget period into the database.
+func AddBudgetPeriod(period models.BudgetPeriod) (models.BudgetPeriod, error) {
+	db := GetDB()
+	// Format time for SQLite (YYYY-MM-DD HH:MM:SS)
+	startDateStr := period.StartDate.UTC().Format("2006-01-02 15:04:05")
+	endDateStr := period.EndDate.UTC().Format("2006-01-02 15:04:05")
+
+	stmt, err := db.Prepare("INSERT INTO budget_periods(name, start_date, end_date, status) VALUES(?, ?, ?, ?)")
+	if err != nil {
+		log.Printf("Error preparing add budget period statement: %v", err)
+		return models.BudgetPeriod{}, err
+	}
+	defer stmt.Close()
+
+	// Use period.Status if provided, otherwise default to "Open" (or let DB default handle it if schema is set up)
+	// The schema currently defaults status to 'Open', so we can pass it directly.
+	res, err := stmt.Exec(period.Name, startDateStr, endDateStr, period.Status)
+	if err != nil {
+		log.Printf("Error executing add budget period statement: %v", err)
+		return models.BudgetPeriod{}, err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		log.Printf("Error getting last insert ID for budget period: %v", err)
+		return models.BudgetPeriod{}, err
+	}
+	period.ID = id
+	// CreatedAt and UpdatedAt are set by the database, so we don't need to fetch them back here
+	// unless they are immediately needed. For now, returning the ID is sufficient.
+	log.Printf("Budget period added successfully with ID: %d", id)
+	return period, nil
+}
+
+// GetBudgetPeriods retrieves all budget periods from the database, ordered by ID.
+func GetBudgetPeriods() ([]models.BudgetPeriod, error) {
+	db := GetDB()
+	rows, err := db.Query("SELECT id, name, start_date, end_date, status FROM budget_periods ORDER BY id ASC")
+	if err != nil {
+		log.Printf("Error querying budget periods: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var periods []models.BudgetPeriod
+	for rows.Next() {
+		var p models.BudgetPeriod
+		var startDateStr string
+		var endDateStr string
+
+		// Note: We are not scanning created_at/updated_at yet
+		if err := rows.Scan(&p.ID, &p.Name, &startDateStr, &endDateStr, &p.Status); err != nil {
+			log.Printf("Error scanning budget period row: %v", err)
+			return nil, err
+		}
+
+		// Parse date strings
+		// SQLite stores dates typically as TEXT in "YYYY-MM-DD HH:MM:SS" format
+		parsedStartDate, timeErr := time.Parse("2006-01-02 15:04:05", startDateStr)
+		if timeErr != nil {
+			log.Printf("Error parsing start_date string '%s' for budget period ID %d: %v", startDateStr, p.ID, timeErr)
+			// Continue with potentially zero-value time or return error
+			return nil, timeErr // For now, return error to be safe
+		}
+		p.StartDate = parsedStartDate
+
+		parsedEndDate, timeErr := time.Parse("2006-01-02 15:04:05", endDateStr)
+		if timeErr != nil {
+			log.Printf("Error parsing end_date string '%s' for budget period ID %d: %v", endDateStr, p.ID, timeErr)
+			return nil, timeErr
+		}
+		p.EndDate = parsedEndDate
+
+		periods = append(periods, p)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Printf("Error after iterating budget period rows: %v", err)
+		return nil, err
+	}
+
+	log.Printf("Retrieved %d budget periods", len(periods))
+	return periods, nil
+}
+
+// // TODO: Add functions for UpdateBudgetPeriod, DeleteBudgetPeriod, GetBudgetPeriodByID later
+
+// AddBudgetAllocation inserts a new budget allocation into the database.
+func AddBudgetAllocation(alloc models.BudgetAllocation) (models.BudgetAllocation, error) {
+	db := GetDB()
+	stmt, err := db.Prepare("INSERT INTO budget_allocations(budget_period_id, category_id, allocated_amount) VALUES(?, ?, ?)")
+	if err != nil {
+		log.Printf("Error preparing add budget allocation statement: %v", err)
+		return models.BudgetAllocation{}, err
+	}
+	defer stmt.Close()
+
+	res, err := stmt.Exec(alloc.BudgetPeriodID, alloc.CategoryID, alloc.AllocatedAmount)
+	if err != nil {
+		log.Printf("Error executing add budget allocation statement: %v", err)
+		return models.BudgetAllocation{}, err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		log.Printf("Error getting last insert ID for budget allocation: %v", err)
+		return models.BudgetAllocation{}, err
+	}
+	alloc.ID = id
+	log.Printf("Budget allocation added successfully with ID: %d for period %d and category %d", id, alloc.BudgetPeriodID, alloc.CategoryID)
+	return alloc, nil
+}
+
+// GetBudgetAllocationsByBudgetPeriodID retrieves all allocations for a specific budget period.
+func GetBudgetAllocationsByBudgetPeriodID(budgetPeriodID int64) ([]models.BudgetAllocation, error) {
+	db := GetDB()
+	rows, err := db.Query("SELECT id, budget_period_id, category_id, allocated_amount FROM budget_allocations WHERE budget_period_id = ? ORDER BY category_id ASC", budgetPeriodID)
+	if err != nil {
+		log.Printf("Error querying budget allocations for period ID %d: %v", budgetPeriodID, err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var allocations []models.BudgetAllocation
+	for rows.Next() {
+		var alloc models.BudgetAllocation
+		// Note: We are not scanning created_at/updated_at yet
+		if err := rows.Scan(&alloc.ID, &alloc.BudgetPeriodID, &alloc.CategoryID, &alloc.AllocatedAmount); err != nil {
+			log.Printf("Error scanning budget allocation row: %v", err)
+			return nil, err
+		}
+		allocations = append(allocations, alloc)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Printf("Error after iterating budget allocation rows for period ID %d: %v", budgetPeriodID, err)
+		return nil, err
+	}
+
+	log.Printf("Retrieved %d budget allocations for period ID %d", len(allocations), budgetPeriodID)
+	return allocations, nil
+}
+
+// GetBudgetAllocation retrieves a specific budget allocation by budget period ID and category ID.
+func GetBudgetAllocation(budgetPeriodID int64, categoryID int64) (models.BudgetAllocation, error) {
+	db := GetDB()
+	row := db.QueryRow("SELECT id, budget_period_id, category_id, allocated_amount FROM budget_allocations WHERE budget_period_id = ? AND category_id = ?", budgetPeriodID, categoryID)
+
+	var alloc models.BudgetAllocation
+	// Note: We are not scanning created_at/updated_at yet
+	err := row.Scan(&alloc.ID, &alloc.BudgetPeriodID, &alloc.CategoryID, &alloc.AllocatedAmount)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("No budget allocation found for period ID %d and category ID %d", budgetPeriodID, categoryID)
+			return models.BudgetAllocation{}, err // Return specific error or custom error for not found
+		}
+		log.Printf("Error scanning budget allocation row for period ID %d and category ID %d: %v", budgetPeriodID, categoryID, err)
+		return models.BudgetAllocation{}, err
+	}
+
+	log.Printf("Retrieved budget allocation ID %d for period ID %d and category ID %d", alloc.ID, budgetPeriodID, categoryID)
+	return alloc, nil
+}
+
+// UpdateBudgetAllocation updates an existing budget allocation.
+// It identifies the allocation by its ID.
+func UpdateBudgetAllocation(alloc models.BudgetAllocation) (models.BudgetAllocation, error) {
+	db := GetDB()
+	stmt, err := db.Prepare("UPDATE budget_allocations SET allocated_amount = ? WHERE id = ?")
+	if err != nil {
+		log.Printf("Error preparing update budget allocation statement: %v", err)
+		return models.BudgetAllocation{}, err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(alloc.AllocatedAmount, alloc.ID)
+	if err != nil {
+		log.Printf("Error executing update budget allocation statement for ID %d: %v", alloc.ID, err)
+		return models.BudgetAllocation{}, err
+	}
+
+	log.Printf("Budget allocation ID %d updated successfully.", alloc.ID)
+	// We could re-fetch the allocation to get updated_at, but for now this is fine.
+	return alloc, nil
+}
+
+// DeleteBudgetAllocation deletes a budget allocation by its ID.
+func DeleteBudgetAllocation(id int64) error {
+	db := GetDB()
+	stmt, err := db.Prepare("DELETE FROM budget_allocations WHERE id = ?")
+	if err != nil {
+		log.Printf("Error preparing delete budget allocation statement: %v", err)
+		return err
+	}
+	defer stmt.Close()
+
+	res, err := stmt.Exec(id)
+	if err != nil {
+		log.Printf("Error executing delete budget allocation statement for ID %d: %v", id, err)
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		log.Printf("Error getting rows affected for delete budget allocation ID %d: %v", id, err)
+		// Not returning error here as the delete might have still worked
+	}
+	if rowsAffected == 0 {
+		log.Printf("No budget allocation found with ID %d to delete.", id)
+		// Optionally return sql.ErrNoRows or a custom error
+	}
+
+	log.Printf("Budget allocation ID %d deleted successfully (or did not exist).", id)
+	return nil
+}
+
+// // TODO: Consider an UpsertBudgetAllocation if needed due to UNIQUE constraint.
