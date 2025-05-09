@@ -2,6 +2,7 @@ import { useState } from 'react';
 import './App.css';
 import AccountsPage from './pages/AccountsPage';
 import CategoriesPage from './pages/CategoriesPage';
+import TransactionsPage from './pages/TransactionsPage';
 
 // Define possible views/pages
 type View = 'Dashboard' | 'Accounts' | 'Categories' | 'Transactions' | 'Budgets' | 'Reports' | 'Settings';
@@ -18,8 +19,7 @@ function App() {
             case 'Categories':
                 return <CategoriesPage />;
             case 'Transactions':
-                 // Placeholder - create TransactionsPage.tsx later
-                return <div>Transactions Page Content</div>;
+                return <TransactionsPage />;
             // Add cases for other views later
             case 'Dashboard':
             default:
