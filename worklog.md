@@ -27,14 +27,14 @@
 - [x] Category Management UI (List, Add/Edit Form) - Add done, Edit later
 - [x] Connect Category UI to Go backend functions
 
-## Phase 3: Manual Transaction Entry & Listing
+## Phase 3: Manual Transaction Entry & Listing (DONE)
 
-- [ ] Transaction Entry Form (React)
-- [ ] Save Transaction Logic (Go - Insert Transaction, Update Account Balance)
-- [ ] Bind Save Transaction function (Go -> React)
-- [ ] Transaction List View (React)
-- [ ] Backend function to retrieve transactions (Go)
-- [ ] Bind transaction retrieval function (Go -> React)
+- [x] Transaction Entry Form (React) - (Includes Account/Category dropdowns)
+- [x] Save Transaction Logic (Go - Insert Transaction, Update Account Balance) - (Already done in Phase 1)
+- [x] Bind Save Transaction function (Go -> React) - (Already done in Phase 1)
+- [x] Transaction List View (React)
+- [x] Backend function to retrieve transactions (Go) - (Already done in Phase 1)
+- [x] Bind transaction retrieval function (Go -> React) - (Already done in Phase 1)
 
 ## Phase 4: Budgeting Fundamentals
 
