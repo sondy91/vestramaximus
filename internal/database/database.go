@@ -272,7 +272,7 @@ func AddCategory(category models.Category) (models.Category, error) {
 func GetCategories() ([]models.Category, error) {
 	db := GetDB()
 	// Query includes parent_category_id which can be NULL
-	rows, err := db.Query("SELECT id, name, type, parent_category_id FROM categories ORDER BY name ASC")
+	rows, err := db.Query("SELECT id, name, type, parent_category_id FROM categories ORDER BY id ASC")
 	if err != nil {
 		log.Printf("Error querying categories: %v", err)
 		return nil, err
