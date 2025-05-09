@@ -8,6 +8,8 @@ import {
   DeleteBudgetAllocation,
 } from '../../wailsjs/go/main/App';
 import AddBudgetAllocationForm from '../components/AddBudgetAllocationForm';
+import ConfirmModal from '../components/ConfirmModal';
+import BudgetPeriodItem from '../components/BudgetPeriodItem';
 
 const BudgetPage: React.FC = () => {
   const [budgetPeriods, setBudgetPeriods] = useState<models.BudgetPeriod[]>([]);
@@ -25,6 +27,9 @@ const BudgetPage: React.FC = () => {
 
   const [editingAllocation, setEditingAllocation] = useState<models.BudgetAllocation | null>(null);
   const [showAddAllocationForm, setShowAddAllocationForm] = useState<boolean>(false);
+
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
+  const [allocationToDelete, setAllocationToDelete] = useState<number | null>(null);
 
   const fetchBudgetPeriods = async () => {
     setIsLoading(true);
@@ -100,19 +105,6 @@ const BudgetPage: React.FC = () => {
     }
   };
 
-  const handleDeleteAllocation = async (allocationId: number) => {
-    if (!selectedPeriod) return;
-    if (window.confirm('Are you sure you want to delete this allocation?')) {
-      try {
-        await DeleteBudgetAllocation(allocationId);
-        fetchAllocationsForSelectedPeriod();
-      } catch (err: any) {
-        console.error(`Error deleting allocation ${allocationId}:`, err);
-        setAllocationsError(err.message || 'Failed to delete allocation');
-      }
-    }
-  };
-
   const handleEditAllocationClick = (allocation: models.BudgetAllocation) => {
     setEditingAllocation(allocation);
     setShowAddAllocationForm(false);
@@ -126,6 +118,30 @@ const BudgetPage: React.FC = () => {
   const getCategoryName = (categoryId: number): string => {
     const category = categories.find(cat => cat.id === categoryId);
     return category ? category.name : 'Unknown Category';
+  };
+
+  const requestDeleteAllocation = (id: number) => {
+    setAllocationToDelete(id);
+    setIsConfirmModalOpen(true);
+  };
+
+  const confirmDeleteAllocation = async () => {
+    if (allocationToDelete === null) return;
+    try {
+      await DeleteBudgetAllocation(allocationToDelete);
+      fetchAllocationsForSelectedPeriod();
+    } catch (err: any) {
+      console.error(`Error deleting allocation ${allocationToDelete}:`, err);
+      setAllocationsError(err.message || 'Failed to delete allocation');
+    } finally {
+      setIsConfirmModalOpen(false);
+      setAllocationToDelete(null);
+    }
+  };
+
+  const cancelDeleteAllocation = () => {
+    setIsConfirmModalOpen(false);
+    setAllocationToDelete(null);
   };
 
   return (
@@ -146,32 +162,16 @@ const BudgetPage: React.FC = () => {
         <p>No budget periods found. Create one to get started!</p>
       )}
       {!isLoading && !error && budgetPeriods.length > 0 && (
-        <table className="clickable-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Start Date</th>
-              <th>End Date</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {budgetPeriods.map((period) => (
-              <tr 
-                key={period.id} 
-                onClick={() => handlePeriodSelect(period)}
-                className={selectedPeriod?.id === period.id ? 'selected-row' : ''}
-              >
-                <td>{period.id}</td>
-                <td>{period.name}</td>
-                <td>{new Date(period.startDate).toLocaleDateString()}</td>
-                <td>{new Date(period.endDate).toLocaleDateString()}</td>
-                <td>{period.status}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="budget-period-list">
+          {budgetPeriods.map((period) => (
+            <BudgetPeriodItem
+              key={period.id}
+              period={period}
+              isSelected={selectedPeriod?.id === period.id}
+              onClick={handlePeriodSelect}
+            />
+          ))}
+        </div>
       )}
 
       {selectedPeriod && (
@@ -199,7 +199,7 @@ const BudgetPage: React.FC = () => {
                     <td>{alloc.allocatedAmount.toFixed(2)}</td>
                     <td>
                       <button onClick={() => handleEditAllocationClick(alloc)} className="btn-edit">Edit</button>
-                      <button onClick={() => handleDeleteAllocation(alloc.id)} className="btn-delete">Delete</button>
+                      <button onClick={() => requestDeleteAllocation(alloc.id)} className="btn-delete">Delete</button>
                     </td>
                   </tr>
                 ))}
@@ -235,6 +235,15 @@ const BudgetPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={isConfirmModalOpen}
+        title="Confirm Deletion"
+        message="Are you sure you want to delete this budget allocation? This action cannot be undone."
+        onConfirm={confirmDeleteAllocation}
+        onCancel={cancelDeleteAllocation}
+        confirmText="Delete"
+      />
     </div>
   );
 };
