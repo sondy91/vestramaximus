@@ -204,7 +204,7 @@ func AddAccount(account models.Account) (models.Account, error) {
 // GetAccounts retrieves all accounts from the database.
 func GetAccounts() ([]models.Account, error) {
 	db := GetDB()
-	rows, err := db.Query("SELECT id, name, type, initial_balance, current_balance FROM accounts ORDER BY name ASC")
+	rows, err := db.Query("SELECT id, name, type, initial_balance, current_balance FROM accounts ORDER BY id ASC")
 	if err != nil {
 		log.Printf("Error querying accounts: %v", err)
 		return nil, err
