@@ -24,9 +24,9 @@
     - As a user, I want to set up budgets with different spending categories (e.g., Groceries, Utilities, Entertainment) for a defined period (e.g., monthly), allocating a specific amount to each.
     - As a user, I want to see at a glance how much of my budget I have spent in each category and how much is remaining, ideally with a visual indicator like a progress bar, to help me stay within my spending limits.
     - As a user, I want to receive alerts or notifications when my spending in a specific budget category is nearing or has exceeded the allocated amount, to help me enforce budget discipline in real-time.
-    - As a user, I want to be able to roll over unspent amounts from a budget category to the next budget period (default of a month).
+    - As a user, I want to be able to roll over positive unspent amounts from a budget category to the next budget period (default of a month).
     - As a user, I want to set up budgets in a step-by-step process that is easy to create a budget for a time period, add categories, and transactions to a category.
-    - As a user, I want to set a planned allocation amount and received allocation amount for a budget category item. A transaction is tied to the received allocation amount of a budget category item.
+    - As a user, I want to set a planned allocation amount for a budget category item.
 
 3. Dashboard & Reporting
 
@@ -47,9 +47,8 @@
 ### 4.1 Income & Expense Management
 
 - Manual Transaction Entry:
-  - Input fields for Date, Amount, Description/Payee, Category, and optional Notes.
-  - Explicitly mark transaction as either Income or Expense.
-  - Support marking transactions as "Cleared" vs. "Pending".
+  - Input fields for Date, Signed Amount, Description/Payee, Category, and optional Notes.
+  - A positive amount is an income entry; a negative amount is an expense entry.
 - Categorization System:
   - Allow users to create, edit, and delete custom expense and income categories.
   - Support creating subcategories within main categories for more granular tracking.
@@ -59,9 +58,11 @@
 
 - Envelope Budgeting Core:
   - Enable the creation of budget periods (defaulting to monthly, with future extensibility for other custom dates).
-  - Within each period, allow allocation of specific planned amounts to defined expense and income categories (the "envelopes").
-  - Allow users to record the received allocation amount for expense and income categories, which transactions will be tied to.
-  - Support rolling budgets where unspent amounts in an expense category can carry over to the next period.
+  - BudgetAllocation stores only PlannedAmount (the envelope “ceiling”).
+  - Actual inflows/outflows are recorded solely as Transaction rows tied to a category.
+  - Remaining balance for a category is computed dynamically:
+    - Remaining = PlannedAmount + Σ(Transactions.Amount). (since expenses are negative).
+  - No roll‑over of negative balances; overspend stays in the current period.
 - Budget Tracking Visualization:
   - Display each budget category with the allocated amount, the amount spent so far, and the remaining balance.
   - Provide a visual progress bar or similar indicator showing the proportion of the budget spent.
@@ -96,13 +97,13 @@
 - BudgetPeriod: Represents a specific instance of a budget (e.g., "June 2025 Budget").
   - Attributes: Period ID, Name (e.g., "Monthly Budget - June 2025"), Start Date, End Date, Status (Open, Closed).
 - BudgetAllocation: Links a BudgetPeriod to a BudgetCategory with allocated amounts.
-  - Attributes: Allocation ID, BudgetPeriod ID, BudgetCategory ID, PlannedAmount (the target allocation), ReceivedAmount (the actual amount received/available for income categories, or actual spending for expense categories), CarryoverFlag (boolean, if unspent rolls over).
+  - Attributes: Allocation ID, BudgetPeriod ID, BudgetCategory ID, PlannedAmount (the target allocation).
 - Transaction: Represents a single manual financial movement.
-  - Attributes: Transaction ID, Date, Amount, Type (Income, Expense), Description/Payee, Category ID, Notes (optional), Status (Cleared, Pending).
+  - Attributes: Transaction ID, Date, Amount, Description/Payee, Category ID, Notes (optional).
 - Backup: Record of local backups.
   - Attributes: Backup ID, Timestamp, FilePath, Status (Success/Fail).
 - AuditLog (Local Only): Record of changes to key data entities.
-  - Attributes: Log ID, Timestamp, UserAction (Create, Update, Delete), EntityType, EntityID, SummaryOfChange (textual description of the change).
+  - Attributes: Log ID, Timestamp, UserAction (Create, Update), EntityType, EntityID, SummaryOfChange (textual description of the change).
 
 ## 6. UI/UX Requirements
 
@@ -112,7 +113,6 @@
 - Interactive Data Visualization: Charts should be interactive, allowing users to hover over data points for details, click on segments (e.g., a slice in a pie chart) to filter related transactions, and adjust date ranges easily.
 - Accessibility: Ensure sufficient color contrast in charts and throughout the interface. Consider keyboard navigation accessibility.
 - Visual Budget Tracking: Use clear progress bars, color-coding (e.g., green for under budget, yellow for nearing limit, red for over budget), and numerical displays for budget remaining.
-- Drag & Drop: Implement drag-and-drop functionality for reordering budget categories within a budget period.
 - Clear Feedback: Provide clear visual confirmation for successful actions (e.g., transaction saved) and informative error messages.
 
 ## 7. Non-Functional Requirements
@@ -120,17 +120,17 @@
 - Deployment Environment: Desktop application for Windows, macOS, and Linux.
 - Local-Only Data Storage: All application data (transactions, budgets, user profiles, etc.) must reside solely on the user's local storage device.
 - Performance:
-  - Key views (Dashboard, Current Budget Period) should load and display data within 1-2 seconds for a reasonable amount of manually entered transaction history (e.g., up to 1,000-2,000 transactions over a few years).
+  - Key views (Dashboard, Current Budget Period) should load and display data within 1-2 seconds for a reasonable amount of manually entered transaction history (e.g., up to 50,000 transactions over a few years).
   - Manual transaction entry should be near instantaneous.
   - Report generation for a typical date range (e.g., 1 year) should complete within a few seconds.
 - Security:
-  - Data at Rest: All sensitive financial data stored locally must be encrypted using a strong, industry-standard encryption algorithm. The encryption key should be managed securely on the user's device.
-  - Application Access: Implement an optional local PIN or password requirement upon launching the application after a period of inactivity.
+  - Encryption at Rest (optional):
+    - When the user enables a PIN, the application derives an AES‑GCM key from that PIN using Argon2, and encrypts the SQLite DB file.
+    - Without a PIN, data remain unencrypted on disk.
 - Reliability:
   - Manual Backup/Restore: Provide a user-initiated option to create a manual backup file and to restore data from a previously created backup file, with clear warnings about data overwriting.
-  - Data Integrity: Implement validation rules to ensure data consistency (e.g., prevent transactions with negative amounts unless representing specific adjustments, ensure category assignments are valid).
 - Scalability (within MVP scope): The architecture should be able to handle a reasonable amount of local data (e.g., manually entered transactions for several years) without significant performance degradation.
-- Data Integrity: Implement validation rules to ensure data consistency (e.g., prevent transactions with negative amounts unless representing specific adjustments, ensure category assignments are valid).
+- Data Integrity: Implement validation rules to ensure data consistency (e.g., validate that sign matches intent (negative = expense, positive = income)).
 
 ## 8. Error Handling & Audit
 
@@ -186,6 +186,10 @@
   - Implement a feature to perform automatic local backups of the encrypted data file at a configurable frequency (e.g., daily).
 - Dark Mode:
   - Offer a dark theme for the user interface.
+- Drag & Drop: 
+  - Implement drag-and-drop functionality for reordering budget categories within a budget period.
+- Income & Expense Management:
+  - Support marking transactions as "Cleared" vs. "Pending".
 
 ## 10. References
 
