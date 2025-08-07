@@ -47,63 +47,63 @@
 ### 4.1 Income & Expense Management
 
 - Manual Transaction Entry:
-  - Input fields for Date, Signed Amount, Description/Payee, Category, and optional Notes.
-  - A positive amount is an income entry; a negative amount is an expense entry.
+    - Input fields for Date, Signed Amount, Description/Payee, Category, and optional Notes.
+    - A positive amount is an income entry; a negative amount is an expense entry.
 - Categorization System:
-  - Allow users to create, edit, and delete custom expense and income categories.
-  - Support creating subcategories within main categories for more granular tracking.
-  - Provide a set of default budgeting categories for users to choose from during initial setup or at any time.
+    - Allow users to create, edit, and delete custom expense and income categories.
+    - Support creating subcategories within main categories for more granular tracking.
+    - Provide a set of default budgeting categories for users to choose from during initial setup or at any time.
 
 ### 4.2 Budgeting
 
 - Envelope Budgeting Core:
-  - Enable the creation of budget periods (defaulting to monthly, with future extensibility for other custom dates).
-  - BudgetAllocation stores only PlannedAmount (the envelope “ceiling”).
-  - Actual inflows/outflows are recorded solely as Transaction rows tied to a category.
-  - Remaining balance for a category is computed dynamically:
-    - Remaining = PlannedAmount + Σ(Transactions.Amount). (since expenses are negative).
-  - No roll‑over of negative balances; overspend stays in the current period.
+    - Enable the creation of budget periods (defaulting to monthly, with future extensibility for other custom dates).
+    - BudgetAllocation stores only PlannedAmount (the envelope “ceiling”).
+    - Actual inflows/outflows are recorded solely as Transaction rows tied to a category.
+    - Remaining balance for a category is computed dynamically:
+        - Remaining = PlannedAmount + Σ(Transactions.Amount). (since expenses are negative).
+    - No roll‑over of negative balances; overspend stays in the current period.
 - Budget Tracking Visualization:
-  - Display each budget category with the allocated amount, the amount spent so far, and the remaining balance.
-  - Provide a visual progress bar or similar indicator showing the proportion of the budget spent.
-  - Highlight categories that are over budget.
+    - Display each budget category with the allocated amount, the amount spent so far, and the remaining balance.
+    - Provide a visual progress bar or similar indicator showing the proportion of the budget spent.
+    - Highlight categories that are over budget.
 - Budget Alerts:
-  - Allow users to set custom thresholds (e.g., 80% spent) for specific budget categories to trigger notifications.
-  - Alert the user when spending in a category exceeds the allocated budget.
+    - Allow users to set custom thresholds (e.g., 80% spent) for specific budget categories to trigger notifications.
+    - Alert the user when spending in a category exceeds the allocated budget.
 - Budget Setup Workflow:
-  - Provide a guided, step-by-step process for new users to create their first budget, including defining the budget period, adding categories, and understanding how to link transactions.
+    - Provide a guided, step-by-step process for new users to create their first budget, including defining the budget period, adding categories, and understanding how to link transactions.
 
 ### 4.3 Dashboard & Reporting
 
 - Main Dashboard View:
-  - Display an at-a-glance summary of the current budget status, including overall budget progress and quick access to recent manual transactions.
+    - Display an at-a-glance summary of the current budget status, including overall budget progress and quick access to recent manual transactions.
 - Detailed Reports:
-  - Spending by Category Report: Tabular and graphical (pie chart) view of spending per category for a selected date range, with drill-down capability into individual transactions within a category.
-  - Income Report: List and sum of income received over a selected date range, filterable by category.
-  - Transaction History: Filterable and searchable list of all manual transactions.
+    - Spending by Category Report: Tabular and graphical (pie chart) view of spending per category for a selected date range, with drill-down capability into individual transactions within a category.
+    - Income Report: List and sum of income received over a selected date range, filterable by category.
+    - Transaction History: Filterable and searchable list of all manual transactions.
 - Trend Analysis:
-  - Visualize spending patterns and income trends over selected periods to identify changes in financial habits.
-  - Compare spending in categories across different budget periods.
+    - Visualize spending patterns and income trends over selected periods to identify changes in financial habits.
+    - Compare spending in categories across different budget periods.
 - Custom Report Generation:
-  - Allow users to define parameters (date range, categories) for a report.
-  - Export the generated report data to CSV format.
+    - Allow users to define parameters (date range, categories) for a report.
+    - Export the generated report data to CSV format.
 
 ## 5. Data Model (High-Level)
 
 - User (Local Only): Primary configuration and settings for the single user.
-  - Attributes: User ID (generated locally), User Name, PIN/Password (hashed/encrypted), Last Login Timestamp.
+    - Attributes: User ID (generated locally), User Name, PIN/Password (hashed/encrypted), Last Login Timestamp.
 - BudgetCategory: Defines a spending or income category for budgeting.
-  - Attributes: Category ID, Name, Type (Income, Expense), Parent Category ID (for subcategories, nullable), IsDefault (boolean, for pre-defined categories).
+    - Attributes: Category ID, Name, Type (Income, Expense), Parent Category ID (for subcategories, nullable), IsDefault (boolean, for pre-defined categories).
 - BudgetPeriod: Represents a specific instance of a budget (e.g., "June 2025 Budget").
-  - Attributes: Period ID, Name (e.g., "Monthly Budget - June 2025"), Start Date, End Date, Status (Open, Closed).
+    - Attributes: Period ID, Name (e.g., "Monthly Budget - June 2025"), Start Date, End Date, Status (Open, Closed).
 - BudgetAllocation: Links a BudgetPeriod to a BudgetCategory with allocated amounts.
-  - Attributes: Allocation ID, BudgetPeriod ID, BudgetCategory ID, PlannedAmount (the target allocation).
+    - Attributes: Allocation ID, BudgetPeriod ID, BudgetCategory ID, PlannedAmount (the target allocation).
 - Transaction: Represents a single manual financial movement.
-  - Attributes: Transaction ID, Date, Amount, Description/Payee, Category ID, Notes (optional).
+    - Attributes: Transaction ID, Date, Amount, Description/Payee, Category ID, Notes (optional).
 - Backup: Record of local backups.
-  - Attributes: Backup ID, Timestamp, FilePath, Status (Success/Fail).
+    - Attributes: Backup ID, Timestamp, FilePath, Status (Success/Fail).
 - AuditLog (Local Only): Record of changes to key data entities.
-  - Attributes: Log ID, Timestamp, UserAction (Create, Update), EntityType, EntityID, SummaryOfChange (textual description of the change).
+    - Attributes: Log ID, Timestamp, UserAction (Create, Update), EntityType, EntityID, SummaryOfChange (textual description of the change).
 
 ## 6. UI/UX Requirements
 
@@ -120,15 +120,15 @@
 - Deployment Environment: Desktop application for Windows, macOS, and Linux.
 - Local-Only Data Storage: All application data (transactions, budgets, user profiles, etc.) must reside solely on the user's local storage device.
 - Performance:
-  - Key views (Dashboard, Current Budget Period) should load and display data within 1-2 seconds for a reasonable amount of manually entered transaction history (e.g., up to 50,000 transactions over a few years).
-  - Manual transaction entry should be near instantaneous.
-  - Report generation for a typical date range (e.g., 1 year) should complete within a few seconds.
+    - Key views (Dashboard, Current Budget Period) should load and display data within 1-2 seconds for a reasonable amount of manually entered transaction history (e.g., up to 50,000 transactions over a few years).
+    - Manual transaction entry should be near instantaneous.
+    - Report generation for a typical date range (e.g., 1 year) should complete within a few seconds.
 - Security:
-  - Encryption at Rest (optional):
-    - When the user enables a PIN, the application derives an AES‑GCM key from that PIN using Argon2, and encrypts the SQLite DB file.
-    - Without a PIN, data remain unencrypted on disk.
+    - Encryption at Rest (optional):
+        - When the user enables a PIN, the application derives an AES‑GCM key from that PIN using Argon2, and encrypts the SQLite DB file.
+        - Without a PIN, data remain unencrypted on disk.
 - Reliability:
-  - Manual Backup/Restore: Provide a user-initiated option to create a manual backup file and to restore data from a previously created backup file, with clear warnings about data overwriting.
+    - Manual Backup/Restore: Provide a user-initiated option to create a manual backup file and to restore data from a previously created backup file, with clear warnings about data overwriting.
 - Scalability (within MVP scope): The architecture should be able to handle a reasonable amount of local data (e.g., manually entered transactions for several years) without significant performance degradation.
 - Data Integrity: Implement validation rules to ensure data consistency (e.g., validate that sign matches intent (negative = expense, positive = income)).
 
@@ -142,54 +142,54 @@
 ## 9. Future Enhancements (Post-MVP)
 
 - Multi-User / Household Management:
-  - Ability to manage finances for multiple individuals within a household.
-  - Shared budgeting capabilities with options for per-person or per-purpose tagging of transactions.
-  - Consolidated views of household finances.
+    - Ability to manage finances for multiple individuals within a household.
+    - Shared budgeting capabilities with options for per-person or per-purpose tagging of transactions.
+    - Consolidated views of household finances.
 - Advanced Transaction Management:
-  - Setting up Recurring Transactions with customizable frequencies.
-  - Bulk Transaction Import from standard file formats (CSV, OFX, QIF).
-  - Review screen for imported transactions to recategorize, merge, or edit.
-  - Split Transactions: Allow a single transaction to be allocated across multiple budget categories.
+    - Setting up Recurring Transactions with customizable frequencies.
+    - Bulk Transaction Import from standard file formats (CSV, OFX, QIF).
+    - Review screen for imported transactions to recategorize, merge, or edit.
+    - Split Transactions: Allow a single transaction to be allocated across multiple budget categories.
 - Account Management:
-  - Creation and management of multiple distinct financial accounts (e.g., Checking, Savings, Credit Card, Loan, Cash).
-  - Tracking initial and current balances for each account.
-  - Calculating and displaying total balance across selected or all accounts.
-  - Inter-Account Transfers: Explicitly support transactions representing money moving between different financial accounts.
+    - Creation and management of multiple distinct financial accounts (e.g., Checking, Savings, Credit Card, Loan, Cash).
+    - Tracking initial and current balances for each account.
+    - Calculating and displaying total balance across selected or all accounts.
+    - Inter-Account Transfers: Explicitly support transactions representing money moving between different financial accounts.
 - Financial Planning & Forecasting:
-  - Forward-looking Cash Flow Forecasting based on current balance and scheduled income/expenses.
-  - "What-if" scenarios to simulate the impact of hypothetical transactions or adjustments.
-  - Savings Goals tracking (e.g., emergency fund, down payment) with progress monitoring.
-  - Debt Payoff Goals tracking (e.g., specific loans or credit cards) and progress monitoring.
-  - Detailed Debt/Loan tracking: Entering principal, interest rate, minimum payment, and monitoring balance changes.
-  - Loan Amortization Schedules: Generate and visualize amortization schedules.
+    - Forward-looking Cash Flow Forecasting based on current balance and scheduled income/expenses.
+    - "What-if" scenarios to simulate the impact of hypothetical transactions or adjustments.
+    - Savings Goals tracking (e.g., emergency fund, down payment) with progress monitoring.
+    - Debt Payoff Goals tracking (e.g., specific loans or credit cards) and progress monitoring.
+    - Detailed Debt/Loan tracking: Entering principal, interest rate, minimum payment, and monitoring balance changes.
+    - Loan Amortization Schedules: Generate and visualize amortization schedules.
 - Advanced Budgeting:
-  - Support for other budgeting types beyond envelope style (e.g., zero-based, percentage-based).
-  - Inter-Envelope Transfers: Ability to move allocated funds between budget envelopes.
-  - Category Groups:
-    - Allow users to group related categories (e.g., "Subscriptions" containing "Netflix", "Disney+").
-    - Implement color-coding options for these groups for enhanced visual organization.
+    - Support for other budgeting types beyond envelope style (e.g., zero-based, percentage-based).
+    - Inter-Envelope Transfers: Ability to move allocated funds between budget envelopes.
+    - Category Groups:
+        - Allow users to group related categories (e.g., "Subscriptions" containing "Netflix", "Disney+").
+        - Implement color-coding options for these groups for enhanced visual organization.
 - Personalized Financial Insights:
-  - Basic analysis of user spending patterns to provide actionable insights (e.g., identifying recurring subscriptions, highlighting unusual spending spikes, suggesting budget adjustments).
+    - Basic analysis of user spending patterns to provide actionable insights (e.g., identifying recurring subscriptions, highlighting unusual spending spikes, suggesting budget adjustments).
 - Investment & Asset Tracking:
-  - Modules for manually tracking investments (stocks, bonds, funds) and other assets (real estate, vehicles) for a more complete net worth picture.
+    - Modules for manually tracking investments (stocks, bonds, funds) and other assets (real estate, vehicles) for a more complete net worth picture.
 - Notifications & Reminders:
-  - Integration with operating system's notification center or calendar for bill reminders and budget alerts.
+    - Integration with operating system's notification center or calendar for bill reminders and budget alerts.
 - Data Sync (Self-Hosted Option):
-  - Implement an optional, privacy-preserving synchronization mechanism for encrypted data across multiple devices using a self-hosted solution (e.g., WebDAV, Dropbox folder sync with local encryption).
+    - Implement an optional, privacy-preserving synchronization mechanism for encrypted data across multiple devices using a self-hosted solution (e.g., WebDAV, Dropbox folder sync with local encryption).
 - Bank Integration (Opt-in, Encrypted):
-  - Offer an optional feature for users to connect to financial institutions via a secure third-party service for automatic transaction import and account balance updates. Emphasize opt-in and encryption.
+    - Offer an optional feature for users to connect to financial institutions via a secure third-party service for automatic transaction import and account balance updates. Emphasize opt-in and encryption.
 - Machine Learning for Categorization:
-  - Develop a feature that learns from user categorization and suggests/automates categorization for new transactions.
+    - Develop a feature that learns from user categorization and suggests/automates categorization for new transactions.
 - Multi-Currency Support:
-  - Allow users to track accounts and budgets in multiple currencies.
+    - Allow users to track accounts and budgets in multiple currencies.
 - Automated Backup System:
-  - Implement a feature to perform automatic local backups of the encrypted data file at a configurable frequency (e.g., daily).
+    - Implement a feature to perform automatic local backups of the encrypted data file at a configurable frequency (e.g., daily).
 - Dark Mode:
-  - Offer a dark theme for the user interface.
-- Drag & Drop: 
-  - Implement drag-and-drop functionality for reordering budget categories within a budget period.
+    - Offer a dark theme for the user interface.
+- Drag & Drop:
+    - Implement drag-and-drop functionality for reordering budget categories within a budget period.
 - Income & Expense Management:
-  - Support marking transactions as "Cleared" vs. "Pending".
+    - Support marking transactions as "Cleared" vs. "Pending".
 
 ## 10. References
 

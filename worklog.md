@@ -36,7 +36,41 @@
 - [x] Backend function to retrieve transactions (Go) - (Already done in Phase 1)
 - [x] Bind transaction retrieval function (Go -> React) - (Already done in Phase 1)
 
-## Phase 4: Budgeting Fundamentals
+## Phase 4: Refactoring & Envelope Budgeting (IN PROGRESS)
+
+### Phase 4.1: Testing Infrastructure
+
+- [ ] Set up table-driven tests for Go backend
+- [ ] Configure React Testing Library for frontend tests
+- [ ] Add code coverage reporting
+
+### Phase 4.2: Data Model Updates
+
+- [ ] Update models to support envelope budgeting
+- [ ] Add envelope-specific fields and relationships
+- [ ] Implement transaction categorization rules
+
+### Phase 4.3: Core Features
+
+- [ ] Implement envelope creation and management
+- [ ] Add allocation tracking
+- [ ] Create budget period management
+- [ ] Enhance transaction entry with envelope assignment
+
+### Phase 4.4: UI/UX Updates
+
+- [ ] Create budget overview dashboard
+- [ ] Add envelope status visualization
+- [ ] Implement transaction history with filtering
+- [ ] Build envelope allocation interface
+
+### Phase 4.5: Polish
+
+- [ ] Perform cross-browser testing
+- [ ] Optimize performance for large datasets
+- [ ] Update documentation
+
+## Phase 4.6: Budgeting Fundamentals
 
 - [ ] Budget Models (Go: `BudgetPeriod`, `BudgetAllocation`)
 - [ ] Budget Setup UI (React: Define periods, allocate amounts)
