@@ -56,25 +56,26 @@ func TestEnvelopeLifecycle(t *testing.T) {
 
 			// This will fail because we haven't implemented the Envelope model yet
 			envelope := &models.Envelope{
-				Name:        tt.envelopeName,
-				Category:    category,
-				Budget:      tt.initialBudget,
-				Period:      period,
-				Status:      "active",
+				Name:           tt.envelopeName,
+				Category:       category,
+				BudgetedAmount: tt.initialBudget,
+				Period:         period,
+				Status:         "active",
 			}
 
 			// Test initial state
 			assert.Equal(t, tt.envelopeName, envelope.Name)
-			assert.Equal(t, tt.initialBudget, envelope.Budget)
+			assert.Equal(t, tt.initialBudget, envelope.BudgetedAmount)
 			assert.Equal(t, 0.0, envelope.Spent())
 			assert.Equal(t, tt.initialBudget, envelope.Remaining())
 
 			// Process transactions
 			for _, amount := range tt.transactions {
 				transaction := &models.Transaction{
-					Amount:   amount,
-					Category: category,
-					Date:     time.Now(),
+					Amount:     amount,
+					CategoryID: category.ID,
+					Date:       time.Now(),
+					Type:       "Expense",
 				}
 				envelope.AddTransaction(transaction)
 			}
