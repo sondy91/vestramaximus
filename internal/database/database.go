@@ -141,6 +141,30 @@ func createTables() error {
 		UNIQUE (budget_period_id, category_id) -- Ensure a category is allocated only once per period
 	);`
 
+	// Envelopes table for envelope budgeting
+	envelopesTableSQL := `
+	CREATE TABLE IF NOT EXISTS envelopes (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		category_id INTEGER NOT NULL,
+		budgeted_amount REAL NOT NULL DEFAULT 0,
+		budget_period_id INTEGER NOT NULL,
+		status TEXT NOT NULL DEFAULT 'active', -- 'active', 'paused', 'archived'
+		created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+		updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
+		FOREIGN KEY (budget_period_id) REFERENCES budget_periods(id) ON DELETE CASCADE
+	);`
+
+	// Create trigger for updating timestamps
+	triggerEnvelopesSQL := `
+	CREATE TRIGGER IF NOT EXISTS update_envelopes_updated_at
+	AFTER UPDATE ON envelopes
+	FOR EACH ROW
+	BEGIN
+		UPDATE envelopes SET updated_at = datetime('now') WHERE id = NEW.id;
+	END;`
+
 	// Trigger to update `updated_at` timestamp (Example for accounts table)
 	// Similar triggers can be added for other tables if needed.
 	triggerAccountsSQL := `
@@ -179,17 +203,20 @@ func createTables() error {
 		UPDATE budget_allocations SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
 	END;`
 
+	// Combine all SQL statements to execute
 	statements := []string{
 		accountsTableSQL,
 		categoriesTableSQL,
 		transactionsTableSQL,
 		budgetPeriodsTableSQL,
 		budgetAllocationsTableSQL,
+		envelopesTableSQL,
 		triggerAccountsSQL,
 		triggerCategoriesSQL,
 		triggerTransactionsSQL,
 		triggerBudgetPeriodsSQL,
 		triggerBudgetAllocationsSQL,
+		triggerEnvelopesSQL,
 	}
 
 	tx, err := db.Begin()
