@@ -57,3 +57,7 @@ export function Greet(arg1) {
 export function UpdateBudgetAllocation(arg1, arg2) {
   return window['go']['main']['App']['UpdateBudgetAllocation'](arg1, arg2);
 }
+
+export function UpdateBudgetPeriodStatus(arg1, arg2) {
+  return window['go']['main']['App']['UpdateBudgetPeriodStatus'](arg1, arg2);
+}

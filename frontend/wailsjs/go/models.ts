@@ -22,9 +22,9 @@ export namespace models {
 	}
 	export class BudgetAllocation {
 	    id: number;
-	    budgetPeriodId: number;
 	    categoryId: number;
 	    allocatedAmount: number;
+	    budgetPeriodId: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new BudgetAllocation(source);
@@ -33,9 +33,9 @@ export namespace models {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
-	        this.budgetPeriodId = source["budgetPeriodId"];
 	        this.categoryId = source["categoryId"];
 	        this.allocatedAmount = source["allocatedAmount"];
+	        this.budgetPeriodId = source["budgetPeriodId"];
 	    }
 	}
 	export class BudgetPeriod {

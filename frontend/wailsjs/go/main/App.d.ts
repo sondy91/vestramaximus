@@ -29,3 +29,5 @@ export function GetTransactions():Promise<Array<models.Transaction>>;
 export function Greet(arg1:string):Promise<string>;
 
 export function UpdateBudgetAllocation(arg1:number,arg2:number):Promise<models.BudgetAllocation>;
+
+export function UpdateBudgetPeriodStatus(arg1:number,arg2:string):Promise<void>;
