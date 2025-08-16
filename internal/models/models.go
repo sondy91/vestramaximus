@@ -15,7 +15,7 @@ type Account struct {
 // Category represents an income or expense category.
 type Category struct {
 	ID               int64  `json:"id"`
-	Name             string `json:"name"`
+	Name             string `json:"name"`             // "Groceries", "Entertainment", "Utilities", "Car Maintenance"
 	Type             string `json:"type"`             // "Income" or "Expense"
 	ParentCategoryID *int64 `json:"parentCategoryId"` // Use pointer for nullable foreign key
 	// Consider adding CreatedAt, UpdatedAt if needed later
@@ -45,12 +45,12 @@ type BudgetPeriod struct {
 	// CreatedAt, UpdatedAt can be added if needed
 }
 
-// BudgetAllocation links a BudgetPeriod to a BudgetCategory with an allocated amount.
+// BudgetAllocation (Envelope renaming later) links a BudgetPeriod to a BudgetCategory with an allocated amount.
 type BudgetAllocation struct {
 	ID              int64   `json:"id"`
-	BudgetPeriodID  int64   `json:"budgetPeriodId"`
 	CategoryID      int64   `json:"categoryId"`
 	AllocatedAmount float64 `json:"allocatedAmount"`
+	BudgetPeriodID  int64   `json:"budgetPeriodId"`
 	// Optional: CarryoverFlag bool `json:"carryoverFlag"` (for future enhancement)
 	// CreatedAt, UpdatedAt can be added if needed
 }

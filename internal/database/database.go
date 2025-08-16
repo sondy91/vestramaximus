@@ -600,6 +600,40 @@ func GetBudgetPeriods() ([]models.BudgetPeriod, error) {
 
 // // TODO: Add functions for UpdateBudgetPeriod, DeleteBudgetPeriod, GetBudgetPeriodByID later
 
+// CountBudgetAllocations returns the number of allocations for a budget period.
+func CountBudgetAllocations(budgetPeriodID int64) (int, error) {
+    db := GetDB()
+    row := db.QueryRow("SELECT COUNT(1) FROM budget_allocations WHERE budget_period_id = ?", budgetPeriodID)
+    var cnt int
+    if err := row.Scan(&cnt); err != nil {
+        log.Printf("Error counting budget allocations for period ID %d: %v", budgetPeriodID, err)
+        return 0, err
+    }
+    return cnt, nil
+}
+
+// UpdateBudgetPeriodStatus updates the status of a budget period.
+func UpdateBudgetPeriodStatus(budgetPeriodID int64, status string) error {
+    db := GetDB()
+    stmt, err := db.Prepare("UPDATE budget_periods SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+    if err != nil {
+        log.Printf("Error preparing update budget period status statement: %v", err)
+        return err
+    }
+    defer stmt.Close()
+
+    res, err := stmt.Exec(status, budgetPeriodID)
+    if err != nil {
+        log.Printf("Error executing update budget period status for ID %d: %v", budgetPeriodID, err)
+        return err
+    }
+    if n, _ := res.RowsAffected(); n == 0 {
+        log.Printf("No budget period found with ID %d to update status.", budgetPeriodID)
+        // Not treating as hard error; caller may decide
+    }
+    return nil
+}
+
 // AddBudgetAllocation inserts a new budget allocation into the database.
 func AddBudgetAllocation(alloc models.BudgetAllocation) (models.BudgetAllocation, error) {
 	db := GetDB()

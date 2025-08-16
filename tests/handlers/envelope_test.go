@@ -45,6 +45,11 @@ func (m *MockEnvelopeRepository) ListByBudgetPeriod(periodID int64) ([]*models.E
 	return args.Get(0).([]*models.Envelope), args.Error(1)
 }
 
+func (m *MockEnvelopeRepository) ListAll() ([]*models.Envelope, error) {
+	args := m.Called()
+	return args.Get(0).([]*models.Envelope), args.Error(1)
+}
+
 func TestEnvelopeHandlers(t *testing.T) {
 	// Common test data
 	now := time.Now()

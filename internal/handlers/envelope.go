@@ -11,6 +11,7 @@ type EnvelopeRepository interface {
 	GetByID(id int64) (*models.Envelope, error)
 	Update(envelope *models.Envelope) error
 	Delete(id int64) error
+	ListAll() ([]*models.Envelope, error)
 	ListByBudgetPeriod(periodID int64) ([]*models.Envelope, error)
 }
 
