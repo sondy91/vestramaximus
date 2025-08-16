@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AddBudgetPeriod } from '../../wailsjs/go/main/App'; // Adjust path as needed
+import { AddBudgetPeriod } from '../wailsAdapter'; // Use adapter for stability
 import { models } from '../../wailsjs/go/models'; // Adjust path as needed
 
 interface AddBudgetPeriodFormProps {
@@ -60,9 +60,9 @@ const AddBudgetPeriodForm: React.FC<AddBudgetPeriodFormProps> = ({ onBudgetPerio
 
   return (
     <form onSubmit={handleSubmit} className="sub-form">
-      {error && <p className="form-error\">{error}</p>}
+      {error && <p className="form-error">{error}</p>}
       <div className="form-group">
-        <label htmlFor="bp-name\">Name:</label>
+        <label htmlFor="bp-name">Name:</label>
         <input
           id="bp-name"
           type="text"
@@ -73,7 +73,7 @@ const AddBudgetPeriodForm: React.FC<AddBudgetPeriodFormProps> = ({ onBudgetPerio
       </div>
       <div className="form-row"> {/* This div groups date inputs */}
         <div className="form-group">
-          <label htmlFor="bp-start-date\">Start Date:</label>
+          <label htmlFor="bp-start-date">Start Date:</label>
           <input
             id="bp-start-date"
             type="date"
@@ -83,7 +83,7 @@ const AddBudgetPeriodForm: React.FC<AddBudgetPeriodFormProps> = ({ onBudgetPerio
           />
         </div>
         <div className="form-group">
-          <label htmlFor="bp-end-date\">End Date:</label>
+          <label htmlFor="bp-end-date">End Date:</label>
           <input
             id="bp-end-date"
             type="date"
@@ -94,16 +94,16 @@ const AddBudgetPeriodForm: React.FC<AddBudgetPeriodFormProps> = ({ onBudgetPerio
         </div>
       </div>
       <div className="form-group">
-        <label htmlFor="bp-status\">Status:</label>
+        <label htmlFor="bp-status">Status:</label>
         <select
           id="bp-status"
           value={status}
           onChange={(e) => setStatus(e.target.value)}
           required
         >
-          <option value="Open\">Open</option>
-          <option value="Closed\">Closed</option>
-          <option value="Archived\">Archived</option>
+          <option value="Open">Open</option>
+          <option value="Closed">Closed</option>
+          <option value="Archived">Archived</option>
         </select>
       </div>
       <button type="submit" disabled={isSubmitting} className="btn btn-primary">
