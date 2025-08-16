@@ -4,3 +4,4 @@ frontend/dist
 *.db
 frontend/package-lock.json
 frontend/package.json.md5
+frontend/src/wailsjs/
