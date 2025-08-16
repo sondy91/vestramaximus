@@ -14,6 +14,50 @@ type App struct {
 	ctx context.Context
 }
 
+// UpdateBudgetPeriodStatus updates a budget period's status.
+// When closing or archiving, it enforces that the period has at least one envelope (allocation).
+func (a *App) UpdateBudgetPeriodStatus(periodID int64, status string) error {
+    log.Printf("Received UpdateBudgetPeriodStatus call: PeriodID=%d, Status=%s", periodID, status)
+    if periodID <= 0 {
+        return fmt.Errorf("invalid budget period ID")
+    }
+    if err := validateBudgetPeriodStatus(status); err != nil {
+        return err
+    }
+    if err := ensureHasEnvelopesForStatus(periodID, status); err != nil {
+        return err
+    }
+    if err := database.UpdateBudgetPeriodStatus(periodID, status); err != nil {
+        log.Printf("Error updating budget period %d status to %s: %v", periodID, status, err)
+        return fmt.Errorf("failed to update budget period status: %w", err)
+    }
+    return nil
+}
+
+func validateBudgetPeriodStatus(status string) error {
+    switch status {
+    case "Open", "Closed", "Archived":
+        return nil
+    default:
+        return fmt.Errorf("invalid budget period status: %s", status)
+    }
+}
+
+func ensureHasEnvelopesForStatus(periodID int64, status string) error {
+    if status != "Closed" && status != "Archived" {
+        return nil
+    }
+    cnt, err := database.CountBudgetAllocations(periodID)
+    if err != nil {
+        log.Printf("Error counting allocations for period %d: %v", periodID, err)
+        return fmt.Errorf("failed to validate budget period envelopes: %w", err)
+    }
+    if cnt == 0 {
+        return fmt.Errorf("budget period must have at least one envelope to set status %s", status)
+    }
+    return nil
+}
+
 // NewApp creates a new App application struct
 func NewApp() *App {
 	return &App{}
