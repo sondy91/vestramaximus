@@ -58,6 +58,7 @@
 
 - Envelope Budgeting Core:
     - Enable the creation of budget periods (defaulting to monthly, with future extensibility for other custom dates).
+    - A Budget Period contains one or more Envelopes (envelopes are per-period budget line items that reference a Category).
     - BudgetAllocation stores only PlannedAmount (the envelope “ceiling”).
     - Actual inflows/outflows are recorded solely as Transaction rows tied to a category.
     - Remaining balance for a category is computed dynamically:
@@ -96,8 +97,9 @@
     - Attributes: Category ID, Name, Type (Income, Expense), Parent Category ID (for subcategories, nullable), IsDefault (boolean, for pre-defined categories).
 - BudgetPeriod: Represents a specific instance of a budget (e.g., "June 2025 Budget").
     - Attributes: Period ID, Name (e.g., "Monthly Budget - June 2025"), Start Date, End Date, Status (Open, Closed).
-- BudgetAllocation: Links a BudgetPeriod to a BudgetCategory with allocated amounts.
+- BudgetAllocation (Envelope; rename later): Links a BudgetPeriod to a BudgetCategory with allocated amounts.
     - Attributes: Allocation ID, BudgetPeriod ID, BudgetCategory ID, PlannedAmount (the target allocation).
+    - Validation: Each BudgetPeriod must contain at least one BudgetAllocation (envelope).
 - Transaction: Represents a single manual financial movement.
     - Attributes: Transaction ID, Date, Amount, Description/Payee, Category ID, Notes (optional).
 - Backup: Record of local backups.

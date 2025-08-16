@@ -3,7 +3,7 @@
 ## Phase 0: Setup & Project Initialization (DONE)
 
 - [x] Install Go
-- [x] Install Node.js & npm
+- [x] Install Node.js & pnpm
 - [x] Install Wails CLI
 - [x] Install Platform Dependencies (`wails doctor`)
 - [x] Create Wails Project (`wails init -n vestramaximus -t react-ts`)
