@@ -6,7 +6,9 @@ import {
   GetBudgetAllocationsByBudgetPeriodID,
   GetCategories,
   DeleteBudgetAllocation,
-} from '../../wailsjs/go/main/App';
+} from '../wailsAdapter';
+import { Button, Box, Typography } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 import AddBudgetAllocationForm from '../components/AddBudgetAllocationForm';
 import ConfirmModal from '../components/ConfirmModal';
 import BudgetPeriodItem from '../components/BudgetPeriodItem';
@@ -177,18 +179,18 @@ const BudgetPage: React.FC = () => {
       {selectedPeriod && (
         <div style={{ marginTop: '30px' }}>
           <hr />
-          <h3>Allocations for: {selectedPeriod.name}</h3>
-          {isLoadingAllocations && <p>Loading allocations...</p>}
+          <h3>Envelopes for: {selectedPeriod.name}</h3>
+          {isLoadingAllocations && <p>Loading envelopes...</p>}
           {allocationsError && <p style={{ color: 'red' }}>Error: {allocationsError}</p>}
           {!isLoadingAllocations && !allocationsError && allocations.length === 0 && !editingAllocation && !showAddAllocationForm && (
-            <p>No allocations found for this period.</p>
+            <p>No envelopes found for this period.</p>
           )}
           {(!isLoadingAllocations && !allocationsError && allocations.length > 0) && (
             <table>
               <thead>
                 <tr>
                   <th>Category</th>
-                  <th>Allocated Amount</th>
+                  <th>Budgeted Amount</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -209,15 +211,15 @@ const BudgetPage: React.FC = () => {
           
           <div style={{ marginTop: '20px' }}>
             {!editingAllocation && !showAddAllocationForm && allocations.length > 0 && (
-                 <button onClick={handleShowAddAllocationForm}>Add New Allocation</button>
+                 <button onClick={handleShowAddAllocationForm}>Add Envelope</button>
             )}
             {(!editingAllocation && !showAddAllocationForm && allocations.length === 0) && (
-                <p>No allocations yet. <button onClick={handleShowAddAllocationForm} className="link-button">Add one?</button></p>
+                <p>No envelopes yet. <button onClick={handleShowAddAllocationForm} className="link-button">Add one?</button></p>
             )}
 
             {(showAddAllocationForm || editingAllocation) && (
               <> 
-                <h4>{editingAllocation ? 'Edit Allocation' : 'Add New Allocation'}</h4>
+                <h4>{editingAllocation ? 'Edit Envelope' : 'Add Envelope'}</h4>
                 {isLoadingCategories && <p>Loading categories for form...</p>}
                 {categoriesError && <p style={{ color: 'red' }}>{categoriesError}</p>}
                 {!isLoadingCategories && !categoriesError && (
@@ -239,7 +241,7 @@ const BudgetPage: React.FC = () => {
       <ConfirmModal
         isOpen={isConfirmModalOpen}
         title="Confirm Deletion"
-        message="Are you sure you want to delete this budget allocation? This action cannot be undone."
+        message="Are you sure you want to delete this envelope? This action cannot be undone."
         onConfirm={confirmDeleteAllocation}
         onCancel={cancelDeleteAllocation}
         confirmText="Delete"

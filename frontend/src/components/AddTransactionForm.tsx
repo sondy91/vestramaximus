@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 // Corrected Wails bindings path
-import { AddTransaction, GetAccounts, GetCategories } from '../../wailsjs/go/main/App';
+import { AddTransaction, GetAccounts, GetCategories } from '../wailsAdapter';
 import { models } from '../../wailsjs/go/models';
 
 type Account = models.Account;

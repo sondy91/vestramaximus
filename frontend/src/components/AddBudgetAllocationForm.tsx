@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { models } from '../../wailsjs/go/models';
-import { AddBudgetAllocation, UpdateBudgetAllocation } from '../../wailsjs/go/main/App';
+import { AddBudgetAllocation, UpdateBudgetAllocation } from '../wailsAdapter';
 
 interface AddBudgetAllocationFormProps {
   budgetPeriodId: number;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 // Corrected Wails bindings path
-import { AddAccount } from '../../wailsjs/go/main/App';
+import { AddAccount } from '../wailsAdapter';
 import { models } from '../../wailsjs/go/models';
 
 // Define props for the form, including a callback for when an account is added

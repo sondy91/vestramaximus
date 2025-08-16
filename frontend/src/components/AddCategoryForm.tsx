@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 // Corrected Wails bindings path
-import { AddCategory, GetCategories } from '../../wailsjs/go/main/App';
+import { AddCategory, GetCategories } from '../wailsAdapter';
 import { models } from '../../wailsjs/go/models';
 
 type Category = models.Category; // Assuming models.Category is available

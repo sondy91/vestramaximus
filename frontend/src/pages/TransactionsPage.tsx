@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 // Corrected Wails bindings path
-import { GetTransactions } from '../../wailsjs/go/main/App';
+import { GetTransactions } from '../wailsAdapter';
 import { models } from '../../wailsjs/go/models';
 
 import AddTransactionForm from '../components/AddTransactionForm';

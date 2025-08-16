@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 // Corrected Wails bindings path
-import { GetAccounts } from '../../wailsjs/go/main/App';
+import { GetAccounts } from '../wailsAdapter';
 import { models } from '../../wailsjs/go/models'; // Import the Go models
 
 // Import the form component
