@@ -83,4 +83,71 @@ describe('BudgetPage', () => {
       expect(screen.getByText('500.00')).toBeInTheDocument();
     });
   });
+
+  it('shows empty states when there are no budget periods', async () => {
+    (Adapter.GetBudgetPeriods as unknown as Mock).mockResolvedValueOnce([] as any);
+    render(<BudgetPage />);
+    const emptyMsg = await screen.findByText(/No budget periods found/i);
+    expect(emptyMsg).toBeInTheDocument();
+  });
+
+  it('shows empty envelopes message and allows toggling Add form', async () => {
+    (Adapter.GetBudgetAllocationsByBudgetPeriodID as unknown as Mock).mockResolvedValueOnce([] as any);
+    render(<BudgetPage />);
+
+    const periodButton = await screen.findByText('August 2025');
+    await userEvent.click(periodButton);
+
+    // Empty state for envelopes
+    await screen.findByText(/No envelopes found for this period\./i);
+
+    // The prompt with link button to add one
+    const addOneLink = await screen.findByRole('button', { name: /Add one\?/i });
+    await userEvent.click(addOneLink);
+
+    // AddBudgetAllocationForm rendered (category label present)
+    await screen.findByLabelText(/Category:/i);
+  });
+
+  it('handles delete flow via ConfirmModal', async () => {
+    render(<BudgetPage />);
+
+    const periodButton = await screen.findByText('August 2025');
+    await userEvent.click(periodButton);
+
+    // Click delete on the first row
+    const delBtn = await screen.findByRole('button', { name: /Delete/i });
+    await userEvent.click(delBtn);
+
+    // Confirm modal appears with Delete button text
+    const confirmBtn = await screen.findByRole('button', { name: /^Delete$/i });
+    await userEvent.click(confirmBtn);
+
+    expect(Adapter.DeleteBudgetAllocation).toHaveBeenCalledWith(1);
+  });
+
+  it('shows error when allocations fetch fails', async () => {
+    (Adapter.GetBudgetAllocationsByBudgetPeriodID as unknown as Mock).mockRejectedValueOnce(new Error('boom'));
+    render(<BudgetPage />);
+
+    const periodButton = await screen.findByText('August 2025');
+    await userEvent.click(periodButton);
+
+    await screen.findByText(/Failed to fetch allocations/i);
+  });
+
+  it('shows categories error inside Add form when categories fetch fails', async () => {
+    (Adapter.GetCategories as unknown as Mock).mockRejectedValueOnce(new Error('no cats'));
+    (Adapter.GetBudgetAllocationsByBudgetPeriodID as unknown as Mock).mockResolvedValueOnce([] as any);
+    render(<BudgetPage />);
+
+    const periodButton = await screen.findByText('August 2025');
+    await userEvent.click(periodButton);
+
+    // Show add form
+    const addOneLink = await screen.findByRole('button', { name: /Add one\?/i });
+    await userEvent.click(addOneLink);
+
+    await screen.findByText(/Failed to fetch categories/i);
+  });
 });
