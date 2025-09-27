@@ -1,19 +1,20 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import './App.css';
+import { ThemeProvider } from './components/theme/ThemeProvider';
 import AccountsPage from './pages/AccountsPage';
+import BudgetPage from './pages/BudgetPage';
 import CategoriesPage from './pages/CategoriesPage';
 import TransactionsPage from './pages/TransactionsPage';
-import BudgetPage from './pages/BudgetPage';
+import WelcomePage from './pages/WelcomePage';
 
 // Define possible views/pages
 type View = 'Dashboard' | 'Accounts' | 'Categories' | 'Transactions' | 'Budgets' | 'Reports' | 'Settings';
 
 function App() {
-    // State to track the current active view
-    const [currentView, setCurrentView] = useState<View>('Dashboard'); // Default view
+    const [hasOnboarded, setHasOnboarded] = useState(false);
+    const [currentView, setCurrentView] = useState<View>('Dashboard');
 
-    // Function to render the component based on the current view
-    const renderView = () => {
+    const content = useMemo(() => {
         switch (currentView) {
             case 'Accounts':
                 return <AccountsPage />;
@@ -23,40 +24,44 @@ function App() {
                 return <TransactionsPage />;
             case 'Budgets':
                 return <BudgetPage />;
-            // Add cases for other views later
-            case 'Dashboard':
             default:
                 return (
-                    <div>
-                        <h1>Welcome!</h1>
-                        <p>Select an option from the sidebar.</p>
+                    <div className="text-left">
+                        <h1>Dashboard</h1>
+                        <p>Select an option from the sidebar to continue.</p>
                     </div>
                 );
         }
-    };
+    }, [currentView]);
+
+    if (!hasOnboarded) {
+        return (
+            <ThemeProvider>
+                <WelcomePage onGetStarted={() => setHasOnboarded(true)} />
+            </ThemeProvider>
+        );
+    }
 
     return (
-        <div id="app" className="app-container">
-            <div className="sidebar">
-                <h2>VestraMaximus</h2>
-                <nav>
-                    <ul>
-                        {/* Update list items to set the view on click */}
-                        <li onClick={() => setCurrentView('Dashboard')}>Dashboard</li>
-                        <li onClick={() => setCurrentView('Accounts')}>Accounts</li>
-                        <li onClick={() => setCurrentView('Categories')}>Categories</li>
-                        <li onClick={() => setCurrentView('Transactions')}>Transactions</li>
-                        <li onClick={() => setCurrentView('Budgets')}>Budgets</li>
-                        <li onClick={() => setCurrentView('Reports')}>Reports</li>
-                        <li onClick={() => setCurrentView('Settings')}>Settings</li>
-                    </ul>
-                </nav>
+        <ThemeProvider>
+            <div id="app" className="app-container">
+                <div className="sidebar">
+                    <h2>VestraMaximus</h2>
+                    <nav>
+                        <ul>
+                            <li onClick={() => setCurrentView('Dashboard')}>Dashboard</li>
+                            <li onClick={() => setCurrentView('Accounts')}>Accounts</li>
+                            <li onClick={() => setCurrentView('Categories')}>Categories</li>
+                            <li onClick={() => setCurrentView('Transactions')}>Transactions</li>
+                            <li onClick={() => setCurrentView('Budgets')}>Budgets</li>
+                            <li onClick={() => setCurrentView('Reports')}>Reports</li>
+                            <li onClick={() => setCurrentView('Settings')}>Settings</li>
+                        </ul>
+                    </nav>
+                </div>
+                <div className="main-content">{content}</div>
             </div>
-            <div className="main-content">
-                {/* Render the component based on the current view state */}
-                {renderView()}
-            </div>
-        </div>
+        </ThemeProvider>
     );
 }
 
