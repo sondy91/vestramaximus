@@ -37,31 +37,87 @@ describe('WelcomePage', () => {
   };
 
   it('renders hero copy and primary action', async () => {
-    const { onGetStarted, user } = renderWelcome();
+    const { user } = renderWelcome();
 
     expect(
       screen.getByRole('heading', { name: /welcome to vestramaximus/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/local-first envelope budgeting for builders/i)
+      screen.getByText(/streamline your budgets, track envelopes/i)
     ).toBeInTheDocument();
 
     const cta = screen.getByRole('button', { name: /get started/i });
     expect(cta).toBeInTheDocument();
 
+    const stepIndicators = screen.getAllByLabelText(/wizard step/i);
+    expect(stepIndicators).toHaveLength(4);
+    expect(stepIndicators[0]).toHaveAttribute('data-active', 'true');
+
     await user.click(cta);
-    expect(onGetStarted).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/customize your experience/i)).toBeInTheDocument();
   });
 
-  it('toggles dark mode when the theme switch is clicked', async () => {
+  it('applies theme changes from step 2 customization', async () => {
     const { user } = renderWelcome();
 
-    const toggle = screen.getByRole('button', { name: /toggle theme/i });
-    expect(toggle).toBeInTheDocument();
     expect(document.documentElement.classList.contains('dark')).toBe(true);
 
-    await user.click(toggle);
+    await user.click(screen.getByRole('button', { name: /get started/i }));
+
+    const lightModeBtn = screen.getByRole('button', { name: /light/i });
+    await user.click(lightModeBtn);
 
     expect(document.documentElement.classList.contains('dark')).toBe(false);
+  });
+
+  it('navigates to step 2 and allows accent color and theme selection', async () => {
+    const { user } = renderWelcome();
+
+    const getStartedBtn = screen.getByRole('button', { name: /get started/i });
+    await user.click(getStartedBtn);
+
+    expect(screen.getByText(/customize your experience/i)).toBeInTheDocument();
+
+    const blueAccent = screen.getByLabelText(/select blue accent/i);
+    await user.click(blueAccent);
+    expect(blueAccent).toHaveClass('scale-110');
+
+    const lightModeBtn = screen.getByRole('button', { name: /light/i });
+    await user.click(lightModeBtn);
+
+    const continueBtn = screen.getByRole('button', { name: /continue/i });
+    expect(continueBtn).toBeInTheDocument();
+  });
+
+  it('navigates back from step 2 to step 1', async () => {
+    const { user } = renderWelcome();
+
+    await user.click(screen.getByRole('button', { name: /get started/i }));
+    expect(screen.getByText(/customize your experience/i)).toBeInTheDocument();
+
+    const backBtn = screen.getByRole('button', { name: /back/i });
+    await user.click(backBtn);
+
+    expect(screen.getByText(/welcome to vestramaximus/i)).toBeInTheDocument();
+  });
+
+  it('navigates to step 3 and allows goal selection', async () => {
+    const { user } = renderWelcome();
+
+    await user.click(screen.getByRole('button', { name: /get started/i }));
+    await user.click(screen.getByRole('button', { name: /continue/i }));
+
+    expect(screen.getByText(/what are your goals\?/i)).toBeInTheDocument();
+
+    const debtGoal = screen.getByLabelText(/select goal: pay off debt/i);
+    await user.click(debtGoal);
+    expect(debtGoal).toHaveClass('border-primary');
+
+    const budgetGoal = screen.getByLabelText(/select goal: create a budget/i);
+    await user.click(budgetGoal);
+    expect(budgetGoal).toHaveClass('border-primary');
+
+    await user.click(debtGoal);
+    expect(debtGoal).not.toHaveClass('border-primary');
   });
 });
