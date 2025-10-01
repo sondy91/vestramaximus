@@ -36,3 +36,6 @@ export const DeleteBudgetAllocation = call('DeleteBudgetAllocation');
 
 // Envelope-related (future-proof)
 export const CreateEnvelope = call('CreateEnvelope');
+
+// Data management
+export const ClearAllData = call('ClearAllData');

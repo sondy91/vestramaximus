@@ -22,6 +22,10 @@ export function AddTransaction(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
   return window['go']['main']['App']['AddTransaction'](arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
 }
 
+export function ClearAllData() {
+  return window['go']['main']['App']['ClearAllData']();
+}
+
 export function DeleteBudgetAllocation(arg1) {
   return window['go']['main']['App']['DeleteBudgetAllocation'](arg1);
 }

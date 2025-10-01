@@ -1,15 +1,15 @@
-import { CreditCard, Flame, MoonStar, Shield, Target, FileText, Sparkles, SunMedium } from 'lucide-react';
+import { Car, Flame, Film, Home, MoonStar, Shield, ShoppingBag, Target, FileText, Sparkles, SunMedium, CreditCard } from 'lucide-react';
 import { useState } from 'react';
 
 import { useTheme } from '@/components/theme/ThemeProvider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Steps } from '@/components/ui/steps';
+import { saveOnboardingData } from '@/lib/onboarding';
 
 type WelcomePageProps = {
   onGetStarted: () => void;
 };
-
 type OnboardingData = {
   accentColor: string;
   themeMode: 'light' | 'dark';
@@ -52,11 +52,11 @@ export default function WelcomePage({ onGetStarted }: WelcomePageProps) {
   };
 
   const starterCategories = [
-    { id: 'groceries', label: 'Groceries', Icon: Target },
-    { id: 'rent', label: 'Rent/Mortgage', Icon: Shield },
+    { id: 'groceries', label: 'Groceries', Icon: ShoppingBag },
+    { id: 'rent', label: 'Rent/Mortgage', Icon: Home },
     { id: 'utilities', label: 'Utilities', Icon: Sparkles },
-    { id: 'transportation', label: 'Transportation', Icon: CreditCard },
-    { id: 'entertainment', label: 'Entertainment', Icon: FileText },
+    { id: 'transportation', label: 'Transportation', Icon: Car },
+    { id: 'entertainment', label: 'Entertainment', Icon: Film },
     { id: 'savings', label: 'Savings', Icon: Target },
   ];
 
@@ -76,10 +76,25 @@ export default function WelcomePage({ onGetStarted }: WelcomePageProps) {
     { id: 4, label: 'Categories' },
   ];
 
+  const canProceed = () => {
+    if (currentStep === 3 && onboardingData.goals.length === 0) {
+      return false;
+    }
+    if (currentStep === 4 && onboardingData.categories.length === 0) {
+      return false;
+    }
+    return true;
+  };
+
   const handleNext = () => {
+    if (!canProceed()) {
+      return;
+    }
     if (currentStep < steps.length) {
       setCurrentStep((prev) => prev + 1);
     } else {
+      // Save onboarding data before completing
+      saveOnboardingData(onboardingData);
       onGetStarted();
     }
   };
@@ -94,9 +109,9 @@ export default function WelcomePage({ onGetStarted }: WelcomePageProps) {
     <div className="relative min-h-screen bg-background text-foreground">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.25),_transparent_60%)]" />
       <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-6 py-10">
-        <header className="flex items-center justify-between">
+        {/* <header className="flex items-center justify-between">
           <span className="text-lg font-semibold tracking-wide text-muted-foreground">VestraMaximus</span>
-        </header>
+        </header> */}
         <main className="flex flex-1 items-center justify-center">
           <Card className="w-full max-w-2xl border-border/70 bg-card/80 backdrop-blur">
             <CardHeader className="space-y-4 text-center">
@@ -222,18 +237,20 @@ export default function WelcomePage({ onGetStarted }: WelcomePageProps) {
                         <button
                           key={goal.id}
                           onClick={() => toggleGoal(goal.id)}
-                          className={`flex items-center gap-3 rounded-lg border-2 p-4 text-left transition-all ${
+                          className={`flex items-center gap-3 rounded-lg border-2 p-4 text-left transition-colors min-h-[60px] ${
                             isSelected
                               ? 'border-primary bg-primary/10 shadow-sm'
                               : 'border-border hover:border-primary/50 hover:bg-accent/50'
                           }`}
                           aria-label={`Select goal: ${goal.label}`}
                         >
-                          <IconComponent className="h-5 w-5 text-muted-foreground" />
+                          <IconComponent className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
                           <span className="flex-1 font-medium">{goal.label}</span>
-                          {isSelected && (
-                            <span className="text-primary text-xl">✓</span>
-                          )}
+                          <span className="w-5 h-5 flex-shrink-0 flex items-center justify-center">
+                            {isSelected && (
+                              <span className="text-primary text-xl">✓</span>
+                            )}
+                          </span>
                         </button>
                       );
                     })}
@@ -250,18 +267,22 @@ export default function WelcomePage({ onGetStarted }: WelcomePageProps) {
                         <button
                           key={category.id}
                           onClick={() => toggleCategory(category.id)}
-                          className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 text-center transition-all ${
+                          className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 text-center transition-colors h-[100px] ${
                             isSelected
                               ? 'border-primary bg-primary/10 shadow-sm'
                               : 'border-border hover:border-primary/50 hover:bg-accent/50'
                           }`}
                           aria-label={`Select category: ${category.label}`}
                         >
-                          <IconComponent className="h-6 w-6 text-muted-foreground" />
-                          <span className="text-sm font-medium">{category.label}</span>
-                          {isSelected && (
-                            <span className="text-primary text-lg">✓</span>
-                          )}
+                          <div className="flex-1 flex flex-col items-center justify-center gap-2">
+                            <IconComponent className="h-6 w-6 flex-shrink-0 text-muted-foreground" />
+                            <span className="text-sm font-medium leading-tight">{category.label}</span>
+                          </div>
+                          <span className="h-5 flex items-center justify-center">
+                            {isSelected && (
+                              <span className="text-primary text-lg">✓</span>
+                            )}
+                          </span>
                         </button>
                       );
                     })}
@@ -281,7 +302,11 @@ export default function WelcomePage({ onGetStarted }: WelcomePageProps) {
                       <Button variant="outline" onClick={handleBack}>
                         Back
                       </Button>
-                      <Button onClick={handleNext} className="min-w-[120px]">
+                      <Button 
+                        onClick={handleNext} 
+                        className="min-w-[120px]"
+                        disabled={!canProceed()}
+                      >
                         {currentStep === steps.length ? 'Complete' : 'Continue'}
                       </Button>
                     </>

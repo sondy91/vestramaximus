@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -764,3 +765,32 @@ func DeleteBudgetAllocation(id int64) error {
 }
 
 // // TODO: Consider an UpsertBudgetAllocation if needed due to UNIQUE constraint.
+
+// ClearAllData deletes all data from all tables (for development/reset purposes).
+// WARNING: This is destructive and cannot be undone.
+func ClearAllData() error {
+	db := GetDB()
+	
+	// Delete in order to respect foreign key constraints
+	tables := []string{
+		"budget_allocations",
+		"transactions",
+		"budget_periods",
+		"categories",
+		"accounts",
+		"envelopes",
+	}
+	
+	for _, table := range tables {
+		stmt := fmt.Sprintf("DELETE FROM %s", table)
+		_, err := db.Exec(stmt)
+		if err != nil {
+			log.Printf("Error clearing table %s: %v", table, err)
+			return fmt.Errorf("failed to clear table %s: %w", table, err)
+		}
+		log.Printf("Cleared table: %s", table)
+	}
+	
+	log.Println("All data cleared successfully")
+	return nil
+}

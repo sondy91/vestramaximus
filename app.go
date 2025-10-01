@@ -411,3 +411,16 @@ func (a *App) DeleteBudgetAllocation(id int64) error {
 	}
 	return nil
 }
+
+// ClearAllData deletes all data from the database (for development/reset purposes).
+// WARNING: This is destructive and cannot be undone.
+func (a *App) ClearAllData() error {
+	log.Println("Received ClearAllData call - WARNING: This will delete all data")
+	err := database.ClearAllData()
+	if err != nil {
+		log.Printf("Error clearing all data: %v", err)
+		return fmt.Errorf("failed to clear all data: %w", err)
+	}
+	log.Println("All data cleared successfully")
+	return nil
+}

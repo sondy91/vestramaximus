@@ -1,9 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import './App.css';
+import AppShell from './components/layout/AppShell';
 import { ThemeProvider } from './components/theme/ThemeProvider';
+import { hasCompletedOnboarding, getOnboardingData, hasSeededBudget, markBudgetSeeded } from './lib/onboarding';
+import { seedInitialBudget } from './lib/seedBudget';
 import AccountsPage from './pages/AccountsPage';
 import BudgetPage from './pages/BudgetPage';
 import CategoriesPage from './pages/CategoriesPage';
+import DashboardPage from './pages/DashboardPage';
+import SettingsPage from './pages/SettingsPage';
 import TransactionsPage from './pages/TransactionsPage';
 import WelcomePage from './pages/WelcomePage';
 
@@ -11,11 +16,37 @@ import WelcomePage from './pages/WelcomePage';
 type View = 'Dashboard' | 'Accounts' | 'Categories' | 'Transactions' | 'Budgets' | 'Reports' | 'Settings';
 
 function App() {
-    const [hasOnboarded, setHasOnboarded] = useState(false);
+    const [hasOnboarded, setHasOnboarded] = useState(() => hasCompletedOnboarding());
     const [currentView, setCurrentView] = useState<View>('Dashboard');
+    const [isSeeding, setIsSeeding] = useState(false);
+
+    // Seed initial budget on first app entry after onboarding
+    useEffect(() => {
+        async function initializeBudget() {
+            if (hasOnboarded && !hasSeededBudget()) {
+                setIsSeeding(true);
+                try {
+                    const data = getOnboardingData();
+                    if (data) {
+                        await seedInitialBudget(data);
+                        markBudgetSeeded();
+                        console.log('Initial budget seeded successfully');
+                    }
+                } catch (error) {
+                    console.error('Failed to seed initial budget:', error);
+                    // Don't block app, user can manually create budget
+                } finally {
+                    setIsSeeding(false);
+                }
+            }
+        }
+        initializeBudget();
+    }, [hasOnboarded]);
 
     const content = useMemo(() => {
         switch (currentView) {
+            case 'Dashboard':
+                return <DashboardPage />;
             case 'Accounts':
                 return <AccountsPage />;
             case 'Categories':
@@ -24,13 +55,10 @@ function App() {
                 return <TransactionsPage />;
             case 'Budgets':
                 return <BudgetPage />;
+            case 'Settings':
+                return <SettingsPage />;
             default:
-                return (
-                    <div className="text-left">
-                        <h1>Dashboard</h1>
-                        <p>Select an option from the sidebar to continue.</p>
-                    </div>
-                );
+                return <DashboardPage />;
         }
     }, [currentView]);
 
@@ -42,25 +70,24 @@ function App() {
         );
     }
 
+    if (isSeeding) {
+        return (
+            <ThemeProvider>
+                <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
+                    <div className="text-center">
+                        <h2 className="text-2xl font-semibold mb-2">Setting up your budget...</h2>
+                        <p className="text-muted-foreground">This will only take a moment.</p>
+                    </div>
+                </div>
+            </ThemeProvider>
+        );
+    }
+
     return (
         <ThemeProvider>
-            <div id="app" className="app-container">
-                <div className="sidebar">
-                    <h2>VestraMaximus</h2>
-                    <nav>
-                        <ul>
-                            <li onClick={() => setCurrentView('Dashboard')}>Dashboard</li>
-                            <li onClick={() => setCurrentView('Accounts')}>Accounts</li>
-                            <li onClick={() => setCurrentView('Categories')}>Categories</li>
-                            <li onClick={() => setCurrentView('Transactions')}>Transactions</li>
-                            <li onClick={() => setCurrentView('Budgets')}>Budgets</li>
-                            <li onClick={() => setCurrentView('Reports')}>Reports</li>
-                            <li onClick={() => setCurrentView('Settings')}>Settings</li>
-                        </ul>
-                    </nav>
-                </div>
-                <div className="main-content">{content}</div>
-            </div>
+            <AppShell currentView={currentView} onNavigate={setCurrentView}>
+                {content}
+            </AppShell>
         </ThemeProvider>
     );
 }

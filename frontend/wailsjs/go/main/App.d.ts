@@ -12,6 +12,8 @@ export function AddCategory(arg1:string,arg2:string,arg3:any):Promise<models.Cat
 
 export function AddTransaction(arg1:string,arg2:number,arg3:string,arg4:string,arg5:number,arg6:number,arg7:string,arg8:string):Promise<models.Transaction>;
 
+export function ClearAllData():Promise<void>;
+
 export function DeleteBudgetAllocation(arg1:number):Promise<void>;
 
 export function GetAccounts():Promise<Array<models.Account>>;
