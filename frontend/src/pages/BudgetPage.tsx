@@ -1,16 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { Edit2, Plus, Trash2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { models } from '../../wailsjs/go/models';
 import AddBudgetPeriodForm from '../components/AddBudgetPeriodForm';
 import {
-  GetBudgetPeriods,
-  GetBudgetAllocationsByBudgetPeriodID,
-  GetCategories,
-  DeleteBudgetAllocation,
+    DeleteBudgetAllocation,
+    GetBudgetAllocationsByBudgetPeriodID,
+    GetBudgetPeriods,
+    GetCategories,
 } from '../wailsAdapter';
-import { Button, Box, Typography } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
+
 import AddBudgetAllocationForm from '../components/AddBudgetAllocationForm';
-import ConfirmModal from '../components/ConfirmModal';
 import BudgetPeriodItem from '../components/BudgetPeriodItem';
 
 const BudgetPage: React.FC = () => {
@@ -141,111 +160,169 @@ const BudgetPage: React.FC = () => {
     }
   };
 
-  const cancelDeleteAllocation = () => {
-    setIsConfirmModalOpen(false);
-    setAllocationToDelete(null);
-  };
-
   return (
-    <div className="page">
-      <h2>Budget Management</h2>
+    <div className="page-container max-w-7xl mx-auto py-8 px-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">Budget Management</h1>
+        <p className="text-muted-foreground mt-2">
+          Manage your budget periods and envelope allocations.
+        </p>
+      </div>
       
-      <div style={{ marginBottom: '30px' }}>
-        <h3>Create New Budget Period</h3>
-        <AddBudgetPeriodForm onBudgetPeriodAdded={handleBudgetPeriodAdded} />
+      <div className="grid gap-8 md:grid-cols-[350px_1fr]">
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Create New Period</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AddBudgetPeriodForm onBudgetPeriodAdded={handleBudgetPeriodAdded} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Budget Periods</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading && <p className="text-muted-foreground">Loading budget periods...</p>}
+              {error && <p className="text-destructive">Error: {error}</p>}
+              {!isLoading && !error && budgetPeriods.length === 0 && (
+                <p className="text-muted-foreground">No budget periods found. Create one to get started!</p>
+              )}
+              {!isLoading && !error && budgetPeriods.length > 0 && (
+                <div className="space-y-2">
+                  {budgetPeriods.map((period) => (
+                    <BudgetPeriodItem
+                      key={period.id}
+                      period={period}
+                      isSelected={selectedPeriod?.id === period.id}
+                      onClick={handlePeriodSelect}
+                    />
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          {selectedPeriod ? (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Envelopes for: {selectedPeriod.name}</CardTitle>
+                {!editingAllocation && !showAddAllocationForm && (
+                  <Button onClick={handleShowAddAllocationForm} size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Envelope
+                  </Button>
+                )}
+              </CardHeader>
+              <CardContent>
+                {isLoadingAllocations && <p className="text-muted-foreground">Loading envelopes...</p>}
+                {allocationsError && <p className="text-destructive">Error: {allocationsError}</p>}
+                
+                {(showAddAllocationForm || editingAllocation) ? (
+                  <div className="bg-muted/30 p-6 rounded-lg border">
+                    <h4 className="text-lg font-semibold mb-4">{editingAllocation ? 'Edit Envelope' : 'Add Envelope'}</h4>
+                    {isLoadingCategories && <p>Loading categories for form...</p>}
+                    {categoriesError && <p className="text-destructive">{categoriesError}</p>}
+                    {!isLoadingCategories && !categoriesError && (
+                      <AddBudgetAllocationForm 
+                        budgetPeriodId={selectedPeriod.id} 
+                        categories={categories} 
+                        existingAllocations={allocations}
+                        onAllocationModified={handleAllocationModified}
+                        allocationToEdit={editingAllocation}
+                      />
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => { setEditingAllocation(null); setShowAddAllocationForm(false); }} 
+                      className="mt-4"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    {!isLoadingAllocations && !allocationsError && allocations.length === 0 && (
+                      <div className="text-center py-12">
+                        <p className="text-muted-foreground mb-4">No envelopes found for this period.</p>
+                        <Button onClick={handleShowAddAllocationForm} variant="outline">
+                          Create your first envelope
+                        </Button>
+                      </div>
+                    )}
+                    {!isLoadingAllocations && !allocationsError && allocations.length > 0 && (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Category</TableHead>
+                            <TableHead>Budgeted Amount</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {allocations.map((alloc) => (
+                            <TableRow key={alloc.id}>
+                              <TableCell className="font-medium">{getCategoryName(alloc.categoryId)}</TableCell>
+                              <TableCell>${alloc.allocatedAmount.toFixed(2)}</TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-2">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon"
+                                    onClick={() => handleEditAllocationClick(alloc)}
+                                  >
+                                    <Edit2 className="h-4 w-4" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon"
+                                    className="text-destructive hover:text-destructive"
+                                    onClick={() => requestDeleteAllocation(alloc.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <h3 className="text-lg font-semibold mb-2">No Period Selected</h3>
+                <p className="text-muted-foreground">Select a budget period from the list to view its envelopes.</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
 
-      <hr />
-
-      <h3>Existing Budget Periods</h3>
-      {isLoading && <p>Loading budget periods...</p>}
-      {error && <p style={{ color: 'red' }}>Error: {error}</p>}
-      {!isLoading && !error && budgetPeriods.length === 0 && (
-        <p>No budget periods found. Create one to get started!</p>
-      )}
-      {!isLoading && !error && budgetPeriods.length > 0 && (
-        <div className="budget-period-list">
-          {budgetPeriods.map((period) => (
-            <BudgetPeriodItem
-              key={period.id}
-              period={period}
-              isSelected={selectedPeriod?.id === period.id}
-              onClick={handlePeriodSelect}
-            />
-          ))}
-        </div>
-      )}
-
-      {selectedPeriod && (
-        <div style={{ marginTop: '30px' }}>
-          <hr />
-          <h3>Envelopes for: {selectedPeriod.name}</h3>
-          {isLoadingAllocations && <p>Loading envelopes...</p>}
-          {allocationsError && <p style={{ color: 'red' }}>Error: {allocationsError}</p>}
-          {!isLoadingAllocations && !allocationsError && allocations.length === 0 && !editingAllocation && !showAddAllocationForm && (
-            <p>No envelopes found for this period.</p>
-          )}
-          {(!isLoadingAllocations && !allocationsError && allocations.length > 0) && (
-            <table>
-              <thead>
-                <tr>
-                  <th>Category</th>
-                  <th>Budgeted Amount</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {allocations.map((alloc) => (
-                  <tr key={alloc.id}>
-                    <td>{getCategoryName(alloc.categoryId)}</td>
-                    <td>{alloc.allocatedAmount.toFixed(2)}</td>
-                    <td>
-                      <button onClick={() => handleEditAllocationClick(alloc)} className="btn-edit">Edit</button>
-                      <button onClick={() => requestDeleteAllocation(alloc.id)} className="btn-delete">Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          
-          <div style={{ marginTop: '20px' }}>
-            {!editingAllocation && !showAddAllocationForm && allocations.length > 0 && (
-                 <button onClick={handleShowAddAllocationForm}>Add Envelope</button>
-            )}
-            {(!editingAllocation && !showAddAllocationForm && allocations.length === 0) && (
-                <p>No envelopes yet. <button onClick={handleShowAddAllocationForm} className="link-button">Add one?</button></p>
-            )}
-
-            {(showAddAllocationForm || editingAllocation) && (
-              <> 
-                <h4>{editingAllocation ? 'Edit Envelope' : 'Add Envelope'}</h4>
-                {isLoadingCategories && <p>Loading categories for form...</p>}
-                {categoriesError && <p style={{ color: 'red' }}>{categoriesError}</p>}
-                {!isLoadingCategories && !categoriesError && (
-                  <AddBudgetAllocationForm 
-                    budgetPeriodId={selectedPeriod.id} 
-                    categories={categories} 
-                    existingAllocations={allocations}
-                    onAllocationModified={handleAllocationModified}
-                    allocationToEdit={editingAllocation}
-                  />
-                )}
-                <button onClick={() => { setEditingAllocation(null); setShowAddAllocationForm(false); }} style={{marginTop: '10px'}}>Cancel</button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      <ConfirmModal
-        isOpen={isConfirmModalOpen}
-        title="Confirm Deletion"
-        message="Are you sure you want to delete this envelope? This action cannot be undone."
-        onConfirm={confirmDeleteAllocation}
-        onCancel={cancelDeleteAllocation}
-        confirmText="Delete"
-      />
+      <AlertDialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the envelope allocation.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setAllocationToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteAllocation} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

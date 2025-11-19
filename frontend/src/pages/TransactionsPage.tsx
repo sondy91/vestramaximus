@@ -1,110 +1,147 @@
-import React, { useState, useEffect, useCallback } from 'react';
-// Corrected Wails bindings path
-import { GetTransactions } from '../wailsAdapter';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { ArrowDownLeft, ArrowUpRight, Plus } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { models } from '../../wailsjs/go/models';
-
 import AddTransactionForm from '../components/AddTransactionForm';
-
-// Assuming models.Transaction, models.Account, models.Category are available from Wails
-type Transaction = models.Transaction;
-// We might need Account and Category types if we want to display their names instead of IDs directly
-// For now, the transaction list will show IDs, but a better UI would fetch and map names.
+import { GetAccounts, GetCategories, GetTransactions } from '../wailsAdapter';
 
 const TransactionsPage: React.FC = () => {
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
-    const [showAddForm, setShowAddForm] = useState<boolean>(true); // Show form by default
+  const [transactions, setTransactions] = useState<models.Transaction[]>([]);
+  const [categories, setCategories] = useState<models.Category[]>([]);
+  const [accounts, setAccounts] = useState<models.Account[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showAddForm, setShowAddForm] = useState<boolean>(false);
 
-    const fetchTransactions = useCallback(async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            const result = await GetTransactions(); // This fetches all transactions
-            setTransactions(result || []);
-        } catch (err: any) {
-            console.error("Error fetching transactions:", err);
-            setError(err.message || 'Failed to fetch transactions');
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [txs, cats, accs] = await Promise.all([
+        GetTransactions(),
+        GetCategories(),
+        GetAccounts()
+      ]);
+      setTransactions(txs || []);
+      setCategories(cats || []);
+      setAccounts(accs || []);
+    } catch (err: any) {
+      console.error("Error fetching data:", err);
+      setError(err.message || 'Failed to fetch data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    useEffect(() => {
-        fetchTransactions();
-    }, [fetchTransactions]);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-    const handleTransactionAdded = () => {
-        fetchTransactions(); // Refresh the list
-        // setShowAddForm(false); // Optionally hide form, or keep it open
-    };
+  const handleTransactionAdded = () => {
+    fetchData();
+    setShowAddForm(false);
+  };
 
-    const formatDate = (dateString: string | Date): string => {
-        // Wails might return date as a string (e.g. RFC3339) or it might be a Date object
-        // if models.Transaction.Date is time.Time. For safety, handle both.
-        const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
-        return date.toLocaleDateString(); // Simple local date format
-    };
+  const getCategoryName = (id: number) => {
+    const cat = categories.find(c => c.id === id);
+    return cat ? cat.name : `Category ${id}`;
+  };
 
+  const getAccountName = (id: number) => {
+    const acc = accounts.find(a => a.id === id);
+    return acc ? acc.name : `Account ${id}`;
+  };
 
-    return (
-        <div className="page-container">
-            <h2>Transactions</h2>
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString();
+  };
 
-            <div style={{ marginBottom: '20px' }}>
-                <button onClick={() => setShowAddForm(!showAddForm)} style={{ marginRight: '10px' }}>
-                    {showAddForm ? 'Hide Form' : 'Add New Transaction'}
-                </button>
-                <button onClick={fetchTransactions} disabled={isLoading}>
-                    {isLoading ? 'Refreshing...' : 'Refresh List'}
-                </button>
-            </div>
-
-            {showAddForm && <AddTransactionForm onTransactionAdded={handleTransactionAdded} />}
-
-            {isLoading && <p>Loading transactions...</p>}
-            {error && <p style={{ color: 'red' }}>Error: {error}</p>}
-
-            {!isLoading && !error && transactions.length === 0 && (
-                <p>No transactions found. Click "Add New Transaction" to get started.</p>
-            )}
-
-            {!isLoading && !error && transactions.length > 0 && (
-                <table className="transactions-table"> {/* Distinct class */}
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Date</th>
-                            <th>Description</th>
-                            <th>Type</th>
-                            <th>Amount</th>
-                            <th>Account ID</th> {/* TODO: Show Account Name */}
-                            <th>Category ID</th>{/* TODO: Show Category Name */}
-                            <th>Status</th>
-                            <th>Notes</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {transactions.map((transaction) => (
-                            <tr key={transaction.id}>
-                                <td>{transaction.id}</td>
-                                <td>{formatDate(transaction.date)}</td>
-                                <td>{transaction.description}</td>
-                                <td>{transaction.type}</td>
-                                <td style={{ color: transaction.amount < 0 ? 'red' : 'green' }}>
-                                    {transaction.amount.toFixed(2)}
-                                </td>
-                                <td>{transaction.accountId}</td>
-                                <td>{transaction.categoryId}</td>
-                                <td>{transaction.status}</td>
-                                <td>{transaction.notes}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            )}
+  return (
+    <div className="page-container max-w-7xl mx-auto py-8 px-6">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Transactions</h1>
+          <p className="text-muted-foreground mt-2">
+            View and manage your income and expenses.
+          </p>
         </div>
-    );
+        <Button onClick={() => setShowAddForm(!showAddForm)}>
+          {showAddForm ? 'Cancel' : <><Plus className="mr-2 h-4 w-4" /> Add Transaction</>}
+        </Button>
+      </div>
+
+      {showAddForm && (
+        <Card className="mb-8 border-primary/20 bg-primary/5">
+          <CardContent className="pt-6">
+            <AddTransactionForm 
+              onTransactionAdded={handleTransactionAdded}
+              categories={categories}
+              accounts={accounts}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Transactions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading && <p className="text-muted-foreground">Loading transactions...</p>}
+          {error && <p className="text-destructive">Error: {error}</p>}
+          
+          {!isLoading && !error && transactions.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">No transactions found.</p>
+              <Button onClick={() => setShowAddForm(true)} variant="outline">
+                Record your first transaction
+              </Button>
+            </div>
+          )}
+
+          {!isLoading && !error && transactions.length > 0 && (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Account</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {transactions.map((tx) => (
+                  <TableRow key={tx.id}>
+                    <TableCell>{formatDate(tx.date)}</TableCell>
+                    <TableCell className="font-medium">{tx.description}</TableCell>
+                    <TableCell>{getCategoryName(tx.categoryId)}</TableCell>
+                    <TableCell>{getAccountName(tx.accountId)}</TableCell>
+                    <TableCell className={`text-right font-medium ${tx.amount < 0 ? 'text-destructive' : 'text-green-600'}`}>
+                      <div className="flex items-center justify-end gap-1">
+                        {tx.amount < 0 ? <ArrowDownLeft className="h-3 w-3" /> : <ArrowUpRight className="h-3 w-3" />}
+                        ${Math.abs(tx.amount).toFixed(2)}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
 };
 
-export default TransactionsPage; 
+export default TransactionsPage;

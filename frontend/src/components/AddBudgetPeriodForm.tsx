@@ -1,6 +1,11 @@
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
+import { Loader2 } from 'lucide-react';
 import React, { useState } from 'react';
-import { AddBudgetPeriod } from '../wailsAdapter'; // Use adapter for stability
-import { models } from '../../wailsjs/go/models'; // Adjust path as needed
+import { models } from '../../wailsjs/go/models';
+import { AddBudgetPeriod } from '../wailsAdapter';
 
 interface AddBudgetPeriodFormProps {
   onBudgetPeriodAdded: (newPeriod: models.BudgetPeriod) => void;
@@ -8,9 +13,9 @@ interface AddBudgetPeriodFormProps {
 
 const AddBudgetPeriodForm: React.FC<AddBudgetPeriodFormProps> = ({ onBudgetPeriodAdded }) => {
   const [name, setName] = useState<string>('');
-  const [startDate, setStartDate] = useState<string>(''); // Store as YYYY-MM-DD string for input type="date"
-  const [endDate, setEndDate] = useState<string>('');   // Store as YYYY-MM-DD string
-  const [status, setStatus] = useState<string>('Open'); // Default status
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  const [status, setStatus] = useState<string>('Open');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -34,7 +39,6 @@ const AddBudgetPeriodForm: React.FC<AddBudgetPeriodFormProps> = ({ onBudgetPerio
       setIsSubmitting(false);
       return;
     }
-    // Basic date validation (end date after start date)
     if (new Date(endDate) <= new Date(startDate)) {
         setError('End date must be after start date.');
         setIsSubmitting(false);
@@ -42,10 +46,8 @@ const AddBudgetPeriodForm: React.FC<AddBudgetPeriodFormProps> = ({ onBudgetPerio
     }
 
     try {
-      // Wails expects date strings (e.g., ISO or YYYY-MM-DD). The Go backend will parse them.
       const newPeriod = await AddBudgetPeriod(name, startDate, endDate, status);
       onBudgetPeriodAdded(newPeriod);
-      // Reset form
       setName('');
       setStartDate('');
       setEndDate('');
@@ -59,22 +61,25 @@ const AddBudgetPeriodForm: React.FC<AddBudgetPeriodFormProps> = ({ onBudgetPerio
   };
 
   return (
-    <form onSubmit={handleSubmit} className="sub-form">
-      {error && <p className="form-error">{error}</p>}
-      <div className="form-group">
-        <label htmlFor="bp-name">Name:</label>
-        <input
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+      
+      <div className="space-y-2">
+        <Label htmlFor="bp-name">Name</Label>
+        <Input
           id="bp-name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          placeholder="e.g., January 2024"
           required
         />
       </div>
-      <div className="form-row"> {/* This div groups date inputs */}
-        <div className="form-group">
-          <label htmlFor="bp-start-date">Start Date:</label>
-          <input
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="bp-start-date">Start Date</Label>
+          <Input
             id="bp-start-date"
             type="date"
             value={startDate}
@@ -82,9 +87,9 @@ const AddBudgetPeriodForm: React.FC<AddBudgetPeriodFormProps> = ({ onBudgetPerio
             required
           />
         </div>
-        <div className="form-group">
-          <label htmlFor="bp-end-date">End Date:</label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="bp-end-date">End Date</Label>
+          <Input
             id="bp-end-date"
             type="date"
             value={endDate}
@@ -93,9 +98,10 @@ const AddBudgetPeriodForm: React.FC<AddBudgetPeriodFormProps> = ({ onBudgetPerio
           />
         </div>
       </div>
-      <div className="form-group">
-        <label htmlFor="bp-status">Status:</label>
-        <select
+
+      <div className="space-y-2">
+        <Label htmlFor="bp-status">Status</Label>
+        <Select
           id="bp-status"
           value={status}
           onChange={(e) => setStatus(e.target.value)}
@@ -104,11 +110,13 @@ const AddBudgetPeriodForm: React.FC<AddBudgetPeriodFormProps> = ({ onBudgetPerio
           <option value="Open">Open</option>
           <option value="Closed">Closed</option>
           <option value="Archived">Archived</option>
-        </select>
+        </Select>
       </div>
-      <button type="submit" disabled={isSubmitting} className="btn btn-primary">
+
+      <Button type="submit" disabled={isSubmitting} className="w-full">
+        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {isSubmitting ? 'Adding...' : 'Add Budget Period'}
-      </button>
+      </Button>
     </form>
   );
 };

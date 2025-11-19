@@ -3,21 +3,27 @@ import { useEffect, useState } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getOnboardingData } from '@/lib/onboarding';
-import { GetBudgetPeriods, GetBudgetAllocationsByBudgetPeriodID } from '@/wailsAdapter';
+import { GetBudgetAllocationsByBudgetPeriodID, GetBudgetPeriods, GetCategories } from '@/wailsAdapter';
 import { models } from '../../wailsjs/go/models';
 
 export default function DashboardPage() {
   const [budgetPeriods, setBudgetPeriods] = useState<models.BudgetPeriod[]>([]);
   const [currentPeriod, setCurrentPeriod] = useState<models.BudgetPeriod | null>(null);
   const [allocations, setAllocations] = useState<models.BudgetAllocation[]>([]);
+  const [categories, setCategories] = useState<models.Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const onboardingData = getOnboardingData();
 
   useEffect(() => {
     async function loadDashboardData() {
       try {
-        const periods = await GetBudgetPeriods();
+        const [periods, cats] = await Promise.all([
+          GetBudgetPeriods(),
+          GetCategories()
+        ]);
+        
         setBudgetPeriods(periods || []);
+        setCategories(cats || []);
         
         // Get the most recent open period
         const openPeriods = (periods || []).filter((p: models.BudgetPeriod) => p.status === 'Open');
@@ -40,6 +46,11 @@ export default function DashboardPage() {
 
   const totalAllocated = allocations.reduce((sum, a) => sum + a.allocatedAmount, 0);
   const envelopeCount = allocations.length;
+
+  const getCategoryName = (categoryId: number) => {
+    const category = categories.find(c => c.id === categoryId);
+    return category ? category.name : `Category ID: ${categoryId}`;
+  };
 
   if (isLoading) {
     return (
@@ -127,7 +138,7 @@ export default function DashboardPage() {
                 {allocations.map((allocation) => (
                   <div key={allocation.id} className="flex items-center justify-between">
                     <div className="flex-1">
-                      <p className="font-medium">Category ID: {allocation.categoryId}</p>
+                      <p className="font-medium">{getCategoryName(allocation.categoryId)}</p>
                       <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-primary" 

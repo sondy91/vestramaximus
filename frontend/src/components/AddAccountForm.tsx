@@ -1,18 +1,20 @@
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
+import { Loader2 } from 'lucide-react';
 import React, { useState } from 'react';
-// Corrected Wails bindings path
-import { AddAccount } from '../wailsAdapter';
 import { models } from '../../wailsjs/go/models';
+import { AddAccount } from '../wailsAdapter';
 
-// Define props for the form, including a callback for when an account is added
 interface AddAccountFormProps {
-    onAccountAdded: () => void; // Callback to refresh the accounts list
+    onAccountAdded: () => void;
 }
 
-// Define an interface for the form state
 interface AccountFormData {
     name: string;
     type: string;
-    initialBalance: string; // Store as string to handle input, parse to float on submit
+    initialBalance: string;
 }
 
 const AccountTypes = ["Checking", "Savings", "Credit Card", "Loan", "Cash", "Investment", "Other"];
@@ -20,7 +22,7 @@ const AccountTypes = ["Checking", "Savings", "Credit Card", "Loan", "Cash", "Inv
 const AddAccountForm: React.FC<AddAccountFormProps> = ({ onAccountAdded }) => {
     const [formData, setFormData] = useState<AccountFormData>({
         name: '',
-        type: AccountTypes[0], // Default to the first account type
+        type: AccountTypes[0],
         initialBalance: '0.00',
     });
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -53,18 +55,13 @@ const AddAccountForm: React.FC<AddAccountFormProps> = ({ onAccountAdded }) => {
             return;
         }
 
-
         try {
-            // Ensure models.Account is the correct type expected by your Go backend
-            // The AddAccount Go function expects name, type, and initialBalance.
             const newAccountData = {
                 name: formData.name,
-                accountType: formData.type, // Ensure field name matches Go function param
+                accountType: formData.type,
                 initialBalance: balance,
             };
 
-            // Call the Go function
-            // The Wails generated AddAccount function will match the signature of your Go method.
             const createdAccount: models.Account = await AddAccount(
                 newAccountData.name,
                 newAccountData.accountType,
@@ -72,66 +69,72 @@ const AddAccountForm: React.FC<AddAccountFormProps> = ({ onAccountAdded }) => {
             );
 
             setSuccessMessage(`Account "${createdAccount.name}" added successfully!`);
-            setFormData({ name: '', type: AccountTypes[0], initialBalance: '0.00' }); // Reset form
-            onAccountAdded(); // Trigger the callback to refresh the parent list
+            setFormData({ name: '', type: AccountTypes[0], initialBalance: '0.00' });
+            onAccountAdded();
         } catch (err: any) {
             console.error("Error adding account:", err);
             setError(err.message || 'Failed to add account.');
         } finally {
             setIsSubmitting(false);
-            // Clear success message after a few seconds
             setTimeout(() => setSuccessMessage(null), 3000);
         }
     };
 
     return (
-        <form onSubmit={handleSubmit} className="add-account-form">
-            <h3>Add New Account</h3>
-            {error && <p className="form-error">Error: {error}</p>}
-            {successMessage && <p className="form-success">{successMessage}</p>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Add New Account</h3>
+            </div>
+            
+            {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+            {successMessage && <p className="text-sm font-medium text-green-600 dark:text-green-400">{successMessage}</p>}
 
-            <div className="form-group">
-                <label htmlFor="name">Account Name:</label>
-                <input
+            <div className="space-y-2">
+                <Label htmlFor="name">Account Name</Label>
+                <Input
                     type="text"
                     id="name"
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
+                    placeholder="e.g., Main Checking"
                     required
                 />
             </div>
 
-            <div className="form-group">
-                <label htmlFor="type">Account Type:</label>
-                <select
-                    id="type"
-                    name="type"
-                    value={formData.type}
-                    onChange={handleInputChange}
-                >
-                    {AccountTypes.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                    ))}
-                </select>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="type">Account Type</Label>
+                    <Select
+                        id="type"
+                        name="type"
+                        value={formData.type}
+                        onChange={handleInputChange}
+                    >
+                        {AccountTypes.map(type => (
+                            <option key={type} value={type}>{type}</option>
+                        ))}
+                    </Select>
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="initialBalance">Initial Balance</Label>
+                    <Input
+                        type="number"
+                        id="initialBalance"
+                        name="initialBalance"
+                        value={formData.initialBalance}
+                        onChange={handleInputChange}
+                        step="0.01"
+                        required
+                    />
+                </div>
             </div>
 
-            <div className="form-group">
-                <label htmlFor="initialBalance">Initial Balance:</label>
-                <input
-                    type="number"
-                    id="initialBalance"
-                    name="initialBalance"
-                    value={formData.initialBalance}
-                    onChange={handleInputChange}
-                    step="0.01"
-                    required
-                />
-            </div>
-
-            <button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isSubmitting ? 'Adding...' : 'Add Account'}
-            </button>
+            </Button>
         </form>
     );
 };

@@ -1,4 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
+import { Loader2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { models } from '../../wailsjs/go/models';
 import { AddBudgetAllocation, UpdateBudgetAllocation } from '../wailsAdapter';
 
@@ -45,8 +50,6 @@ const AddBudgetAllocationForm: React.FC<AddBudgetAllocationFormProps> = ({
     if (!isEditMode) {
         setSelectedCategoryId('');
     }
-  // Ensure this effect runs correctly when availableCategories changes or when exiting edit mode.
-  // Adding allocationToEdit to dependencies to re-evaluate when switching from edit to add.
   }, [availableCategories.length, isEditMode, allocationToEdit]);
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -75,19 +78,16 @@ const AddBudgetAllocationForm: React.FC<AddBudgetAllocationFormProps> = ({
     setIsSubmitting(true);
     try {
       if (isEditMode && allocationToEdit) {
-        // For update, the backend expects the ID of the allocation and the new amount.
-        // Our current Go `UpdateBudgetAllocation` takes a full BudgetAllocation model but only uses ID and AllocatedAmount.
         const updatedAllocation: models.BudgetAllocation = {
-            ...allocationToEdit, // Spread existing fields
+            ...allocationToEdit,
             allocatedAmount: amountNum,
-            // categoryId will remain allocationToEdit.categoryId, not changeable in this UI for simplicity
         };
-        await UpdateBudgetAllocation(updatedAllocation.id, updatedAllocation.allocatedAmount); // Send ID and new amount
+        await UpdateBudgetAllocation(updatedAllocation.id, updatedAllocation.allocatedAmount);
       } else {
         await AddBudgetAllocation(budgetPeriodId, categoryIdNum, amountNum);
       }
       onAllocationModified();
-      if (!isEditMode) { // Only reset form fully if in add mode
+      if (!isEditMode) {
         setSelectedCategoryId('');
         setAllocatedAmount('');
       }
@@ -100,16 +100,17 @@ const AddBudgetAllocationForm: React.FC<AddBudgetAllocationFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="sub-form">
-      {error && <p className="form-error">{error}</p>}
-      <div className="form-group">
-        <label htmlFor="ba-category">Category:</label>
-        <select
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+      
+      <div className="space-y-2">
+        <Label htmlFor="ba-category">Category</Label>
+        <Select
           id="ba-category"
           value={selectedCategoryId}
           onChange={(e) => setSelectedCategoryId(e.target.value)}
           required
-          disabled={isEditMode} // Disable category change in edit mode for simplicity
+          disabled={isEditMode}
         >
           <option value="" disabled={!isEditMode}>Select a category</option>
           {availableCategories.length === 0 && !isEditMode && <option value="" disabled>All categories allocated</option>}
@@ -120,26 +121,31 @@ const AddBudgetAllocationForm: React.FC<AddBudgetAllocationFormProps> = ({
                 </option>
             )
           ))}
-        </select>
+        </Select>
       </div>
-      <div className="form-group">
-        <label htmlFor="ba-amount">Allocated Amount:</label>
-        <input
+
+      <div className="space-y-2">
+        <Label htmlFor="ba-amount">Allocated Amount</Label>
+        <Input
           id="ba-amount"
           type="number"
           value={allocatedAmount}
           onChange={(e) => setAllocatedAmount(e.target.value)}
           placeholder="0.00"
           step="0.01"
-          min="0" // Allow 0 for editing, maybe to zero out an allocation
+          min="0"
           required
         />
       </div>
-      <button 
+
+      <Button 
         type="submit" 
-        disabled={isSubmitting || (!isEditMode && availableCategories.length === 0 && !selectedCategoryId)}>
+        disabled={isSubmitting || (!isEditMode && availableCategories.length === 0 && !selectedCategoryId)}
+        className="w-full"
+      >
+        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {isSubmitting ? (isEditMode ? 'Updating...' : 'Adding...') : (isEditMode ? 'Update Allocation' : 'Add Allocation')}
-      </button>
+      </Button>
     </form>
   );
 };

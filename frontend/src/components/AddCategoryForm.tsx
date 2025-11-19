@@ -1,44 +1,51 @@
-import React, { useState, useEffect } from 'react';
-// Corrected Wails bindings path
-import { AddCategory, GetCategories } from '../wailsAdapter';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
+import { Loader2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { models } from '../../wailsjs/go/models';
+import { AddCategory, GetCategories } from '../wailsAdapter';
 
-type Category = models.Category; // Assuming models.Category is available
+type Category = models.Category;
 
 interface AddCategoryFormProps {
     onCategoryAdded: () => void;
+    categories?: Category[];
 }
 
 interface CategoryFormData {
     name: string;
     type: 'Income' | 'Expense';
-    parentCategoryID: string; // Store as string, "0" or "" for no parent
+    parentCategoryID: string;
 }
 
-const AddCategoryForm: React.FC<AddCategoryFormProps> = ({ onCategoryAdded }) => {
+const AddCategoryForm: React.FC<AddCategoryFormProps> = ({ onCategoryAdded, categories: propCategories }) => {
     const [formData, setFormData] = useState<CategoryFormData>({
         name: '',
-        type: 'Expense', // Default type
-        parentCategoryID: "0", // Default to no parent
+        type: 'Expense',
+        parentCategoryID: "0",
     });
-    const [existingCategories, setExistingCategories] = useState<Category[]>([]);
+    const [existingCategories, setExistingCategories] = useState<Category[]>(propCategories || []);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-    // Fetch existing categories for the parent dropdown
     useEffect(() => {
-        const fetchExistingCategories = async () => {
-            try {
-                const cats = await GetCategories();
-                setExistingCategories(cats || []);
-            } catch (err) {
-                console.error("Error fetching existing categories for form:", err);
-                // Handle error, maybe disable parent selection or show a message
-            }
-        };
-        fetchExistingCategories();
-    }, []);
+        if (!propCategories) {
+            const fetchExistingCategories = async () => {
+                try {
+                    const cats = await GetCategories();
+                    setExistingCategories(cats || []);
+                } catch (err) {
+                    console.error("Error fetching existing categories for form:", err);
+                }
+            };
+            fetchExistingCategories();
+        } else {
+            setExistingCategories(propCategories);
+        }
+    }, [propCategories]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -60,27 +67,26 @@ const AddCategoryForm: React.FC<AddCategoryFormProps> = ({ onCategoryAdded }) =>
             return;
         }
 
-        // Convert parentCategoryID to *int64 for Go: null if "0" or empty, else parsed int.
         let parentID: number | null = parseInt(formData.parentCategoryID, 10);
         if (isNaN(parentID) || parentID === 0) {
             parentID = null;
         }
 
         try {
-            // The Go function AddCategory expects: name, categoryType, parentCategoryID (*int64)
-            // Wails handles the pointer conversion for null if we pass null from JS.
             const createdCategory: models.Category = await AddCategory(
                 formData.name,
                 formData.type,
-                parentID // Pass the processed parentID
+                parentID
             );
 
             setSuccessMessage(`Category "${createdCategory.name}" added successfully!`);
-            setFormData({ name: '', type: 'Expense', parentCategoryID: "0" }); // Reset form
-            onCategoryAdded(); // Trigger callback
-             // Re-fetch categories for the dropdown to include the new one
-            const cats = await GetCategories();
-            setExistingCategories(cats || []);
+            setFormData({ name: '', type: 'Expense', parentCategoryID: "0" });
+            onCategoryAdded();
+            
+            if (!propCategories) {
+                const cats = await GetCategories();
+                setExistingCategories(cats || []);
+            }
 
         } catch (err: any) {
             console.error("Error adding category:", err);
@@ -92,56 +98,63 @@ const AddCategoryForm: React.FC<AddCategoryFormProps> = ({ onCategoryAdded }) =>
     };
 
     return (
-        <form onSubmit={handleSubmit} className="add-category-form"> {/* Use a distinct class */}
-            <h3>Add New Category</h3>
-            {error && <p className="form-error">Error: {error}</p>}
-            {successMessage && <p className="form-success">{successMessage}</p>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Add New Category</h3>
+            </div>
 
-            <div className="form-group">
-                <label htmlFor="name">Category Name:</label>
-                <input
+            {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+            {successMessage && <p className="text-sm font-medium text-green-600 dark:text-green-400">{successMessage}</p>}
+
+            <div className="space-y-2">
+                <Label htmlFor="name">Category Name</Label>
+                <Input
                     type="text"
                     id="name"
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
+                    placeholder="e.g., Groceries"
                     required
                 />
             </div>
 
-            <div className="form-group">
-                <label htmlFor="type">Category Type:</label>
-                <select
-                    id="type"
-                    name="type"
-                    value={formData.type}
-                    onChange={handleInputChange}
-                >
-                    <option value="Expense">Expense</option>
-                    <option value="Income">Income</option>
-                </select>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="type">Category Type</Label>
+                    <Select
+                        id="type"
+                        name="type"
+                        value={formData.type}
+                        onChange={handleInputChange}
+                    >
+                        <option value="Expense">Expense</option>
+                        <option value="Income">Income</option>
+                    </Select>
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="parentCategoryID">Parent Category (Optional)</Label>
+                    <Select
+                        id="parentCategoryID"
+                        name="parentCategoryID"
+                        value={formData.parentCategoryID}
+                        onChange={handleInputChange}
+                    >
+                        <option value="0">-- No Parent --</option>
+                        {existingCategories.map(cat => (
+                            <option key={cat.id} value={cat.id.toString()}>
+                                {cat.name} ({cat.type})
+                            </option>
+                        ))}
+                    </Select>
+                </div>
             </div>
 
-            <div className="form-group">
-                <label htmlFor="parentCategoryID">Parent Category (Optional):</label>
-                <select
-                    id="parentCategoryID"
-                    name="parentCategoryID"
-                    value={formData.parentCategoryID}
-                    onChange={handleInputChange}
-                >
-                    <option value="0">-- No Parent --</option>
-                    {existingCategories.map(cat => (
-                        <option key={cat.id} value={cat.id.toString()}>
-                            {cat.name} ({cat.type})
-                        </option>
-                    ))}
-                </select>
-            </div>
-
-            <button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isSubmitting ? 'Adding...' : 'Add Category'}
-            </button>
+            </Button>
         </form>
     );
 };
