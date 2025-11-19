@@ -17,11 +17,11 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:      "vestramaximus",
-		MinWidth:   1080,
-		MinHeight:  720,
-		Fullscreen: true,
-		Frameless:  false,
+		Title:            "vestramaximus",
+		MinWidth:         1080,
+		MinHeight:        720,
+		WindowStartState: options.Maximised,
+		Frameless:        false,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
