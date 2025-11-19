@@ -16,7 +16,7 @@ to this in your browser, and you can call your Go code from devtools.
 
 ## Building
 
-To build a redistributable, production mode package, use `wails build`.
+To build a redistributable, production mode package, use `wails build -tags webkit2_41`.
 
 > If you have the issue around libwebkit not being found related to Ubuntu 24.04, use the following command, see more about it in the `Troubleshooting` section below!
 
