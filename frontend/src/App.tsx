@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import './App.css';
 import AppShell from './components/layout/AppShell';
 import { ThemeProvider } from './components/theme/ThemeProvider';
-import { hasCompletedOnboarding, getOnboardingData, hasSeededBudget, markBudgetSeeded } from './lib/onboarding';
+import { getOnboardingData, hasCompletedOnboarding, hasSeededBudget, markBudgetSeeded } from './lib/onboarding';
 import { seedInitialBudget } from './lib/seedBudget';
 import AccountsPage from './pages/AccountsPage';
 import BudgetPage from './pages/BudgetPage';
@@ -46,7 +46,7 @@ function App() {
     const content = useMemo(() => {
         switch (currentView) {
             case 'Dashboard':
-                return <DashboardPage />;
+                return <DashboardPage onNavigate={setCurrentView} />;
             case 'Accounts':
                 return <AccountsPage />;
             case 'Categories':
@@ -58,7 +58,7 @@ function App() {
             case 'Settings':
                 return <SettingsPage />;
             default:
-                return <DashboardPage />;
+                return <DashboardPage onNavigate={setCurrentView} />;
         }
     }, [currentView]);
 
