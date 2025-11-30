@@ -26,6 +26,10 @@ export function ClearAllData() {
   return window['go']['main']['App']['ClearAllData']();
 }
 
+export function DeleteAccount(arg1) {
+  return window['go']['main']['App']['DeleteAccount'](arg1);
+}
+
 export function DeleteBudgetAllocation(arg1) {
   return window['go']['main']['App']['DeleteBudgetAllocation'](arg1);
 }
@@ -60,6 +64,10 @@ export function Greet(arg1) {
 
 export function UpdateBudgetAllocation(arg1, arg2) {
   return window['go']['main']['App']['UpdateBudgetAllocation'](arg1, arg2);
+}
+
+export function UpdateBudgetPeriod(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['UpdateBudgetPeriod'](arg1, arg2, arg3, arg4);
 }
 
 export function UpdateBudgetPeriodStatus(arg1, arg2) {

@@ -14,6 +14,8 @@ export function AddTransaction(arg1:string,arg2:number,arg3:string,arg4:string,a
 
 export function ClearAllData():Promise<void>;
 
+export function DeleteAccount(arg1:number):Promise<void>;
+
 export function DeleteBudgetAllocation(arg1:number):Promise<void>;
 
 export function GetAccounts():Promise<Array<models.Account>>;
@@ -31,5 +33,7 @@ export function GetTransactions():Promise<Array<models.Transaction>>;
 export function Greet(arg1:string):Promise<string>;
 
 export function UpdateBudgetAllocation(arg1:number,arg2:number):Promise<models.BudgetAllocation>;
+
+export function UpdateBudgetPeriod(arg1:number,arg2:string,arg3:string,arg4:string):Promise<models.BudgetPeriod>;
 
 export function UpdateBudgetPeriodStatus(arg1:number,arg2:string):Promise<void>;

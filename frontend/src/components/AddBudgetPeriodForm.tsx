@@ -40,9 +40,9 @@ const AddBudgetPeriodForm: React.FC<AddBudgetPeriodFormProps> = ({ onBudgetPerio
       return;
     }
     if (new Date(endDate) <= new Date(startDate)) {
-        setError('End date must be after start date.');
-        setIsSubmitting(false);
-        return;
+      setError('End date must be after start date.');
+      setIsSubmitting(false);
+      return;
     }
 
     try {
@@ -63,7 +63,7 @@ const AddBudgetPeriodForm: React.FC<AddBudgetPeriodFormProps> = ({ onBudgetPerio
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <p className="text-sm font-medium text-destructive">{error}</p>}
-      
+
       <div className="space-y-2">
         <Label htmlFor="bp-name">Name</Label>
         <Input
@@ -85,6 +85,7 @@ const AddBudgetPeriodForm: React.FC<AddBudgetPeriodFormProps> = ({ onBudgetPerio
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
             required
+            className="dark:[color-scheme:dark]"
           />
         </div>
         <div className="space-y-2">
@@ -95,6 +96,7 @@ const AddBudgetPeriodForm: React.FC<AddBudgetPeriodFormProps> = ({ onBudgetPerio
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
             required
+            className="dark:[color-scheme:dark]"
           />
         </div>
       </div>

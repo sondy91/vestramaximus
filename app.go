@@ -17,45 +17,45 @@ type App struct {
 // UpdateBudgetPeriodStatus updates a budget period's status.
 // When closing or archiving, it enforces that the period has at least one envelope (allocation).
 func (a *App) UpdateBudgetPeriodStatus(periodID int64, status string) error {
-    log.Printf("Received UpdateBudgetPeriodStatus call: PeriodID=%d, Status=%s", periodID, status)
-    if periodID <= 0 {
-        return fmt.Errorf("invalid budget period ID")
-    }
-    if err := validateBudgetPeriodStatus(status); err != nil {
-        return err
-    }
-    if err := ensureHasEnvelopesForStatus(periodID, status); err != nil {
-        return err
-    }
-    if err := database.UpdateBudgetPeriodStatus(periodID, status); err != nil {
-        log.Printf("Error updating budget period %d status to %s: %v", periodID, status, err)
-        return fmt.Errorf("failed to update budget period status: %w", err)
-    }
-    return nil
+	log.Printf("Received UpdateBudgetPeriodStatus call: PeriodID=%d, Status=%s", periodID, status)
+	if periodID <= 0 {
+		return fmt.Errorf("invalid budget period ID")
+	}
+	if err := validateBudgetPeriodStatus(status); err != nil {
+		return err
+	}
+	if err := ensureHasEnvelopesForStatus(periodID, status); err != nil {
+		return err
+	}
+	if err := database.UpdateBudgetPeriodStatus(periodID, status); err != nil {
+		log.Printf("Error updating budget period %d status to %s: %v", periodID, status, err)
+		return fmt.Errorf("failed to update budget period status: %w", err)
+	}
+	return nil
 }
 
 func validateBudgetPeriodStatus(status string) error {
-    switch status {
-    case "Open", "Closed", "Archived":
-        return nil
-    default:
-        return fmt.Errorf("invalid budget period status: %s", status)
-    }
+	switch status {
+	case "Open", "Closed", "Archived":
+		return nil
+	default:
+		return fmt.Errorf("invalid budget period status: %s", status)
+	}
 }
 
 func ensureHasEnvelopesForStatus(periodID int64, status string) error {
-    if status != "Closed" && status != "Archived" {
-        return nil
-    }
-    cnt, err := database.CountBudgetAllocations(periodID)
-    if err != nil {
-        log.Printf("Error counting allocations for period %d: %v", periodID, err)
-        return fmt.Errorf("failed to validate budget period envelopes: %w", err)
-    }
-    if cnt == 0 {
-        return fmt.Errorf("budget period must have at least one envelope to set status %s", status)
-    }
-    return nil
+	if status != "Closed" && status != "Archived" {
+		return nil
+	}
+	cnt, err := database.CountBudgetAllocations(periodID)
+	if err != nil {
+		log.Printf("Error counting allocations for period %d: %v", periodID, err)
+		return fmt.Errorf("failed to validate budget period envelopes: %w", err)
+	}
+	if cnt == 0 {
+		return fmt.Errorf("budget period must have at least one envelope to set status %s", status)
+	}
+	return nil
 }
 
 // NewApp creates a new App application struct
@@ -115,6 +115,20 @@ func (a *App) GetAccounts() ([]models.Account, error) {
 		return nil, fmt.Errorf("failed to retrieve accounts: %w", err)
 	}
 	return accounts, nil
+}
+
+// DeleteAccount deletes a financial account.
+func (a *App) DeleteAccount(id int64) error {
+	log.Printf("Received DeleteAccount call: ID=%d", id)
+	if id <= 0 {
+		return fmt.Errorf("invalid account ID")
+	}
+	err := database.DeleteAccount(id)
+	if err != nil {
+		log.Printf("Error calling database.DeleteAccount for ID %d: %v", id, err)
+		return fmt.Errorf("failed to delete account: %w", err)
+	}
+	return nil
 }
 
 // AddCategory adds a new income or expense category.
@@ -280,6 +294,56 @@ func (a *App) AddBudgetPeriod(name string, startDateString string, endDateString
 		return models.BudgetPeriod{}, fmt.Errorf("failed to add budget period: %w", err)
 	}
 	return createdPeriod, nil
+}
+
+// UpdateBudgetPeriod updates an existing budget period.
+func (a *App) UpdateBudgetPeriod(id int64, name string, startDateString string, endDateString string) (models.BudgetPeriod, error) {
+	log.Printf("Received UpdateBudgetPeriod call: ID=%d, Name=%s, StartDate=%s, EndDate=%s", id, name, startDateString, endDateString)
+
+	if id <= 0 {
+		return models.BudgetPeriod{}, fmt.Errorf("invalid budget period ID")
+	}
+	if name == "" {
+		return models.BudgetPeriod{}, fmt.Errorf("budget period name cannot be empty")
+	}
+
+	// Parse dates
+	parsedStartDate, err := time.Parse(time.RFC3339, startDateString)
+	if err != nil {
+		parsedStartDate, err = time.Parse("2006-01-02", startDateString) // Fallback to YYYY-MM-DD
+		if err != nil {
+			log.Printf("Error parsing start date string '%s': %v", startDateString, err)
+			return models.BudgetPeriod{}, fmt.Errorf("invalid start date format: %s", startDateString)
+		}
+	}
+
+	parsedEndDate, err := time.Parse(time.RFC3339, endDateString)
+	if err != nil {
+		parsedEndDate, err = time.Parse("2006-01-02", endDateString) // Fallback to YYYY-MM-DD
+		if err != nil {
+			log.Printf("Error parsing end date string '%s': %v", endDateString, err)
+			return models.BudgetPeriod{}, fmt.Errorf("invalid end date format: %s", endDateString)
+		}
+	}
+
+	if !parsedEndDate.After(parsedStartDate) {
+		return models.BudgetPeriod{}, fmt.Errorf("end date must be after start date")
+	}
+
+	periodToUpdate := models.BudgetPeriod{
+		ID:        id,
+		Name:      name,
+		StartDate: parsedStartDate,
+		EndDate:   parsedEndDate,
+		// Status is not updated via this method, it has its own UpdateBudgetPeriodStatus
+	}
+
+	updatedPeriod, err := database.UpdateBudgetPeriod(periodToUpdate)
+	if err != nil {
+		log.Printf("Error calling database.UpdateBudgetPeriod for ID %d: %v", id, err)
+		return models.BudgetPeriod{}, fmt.Errorf("failed to update budget period: %w", err)
+	}
+	return updatedPeriod, nil
 }
 
 // GetBudgetPeriods retrieves all budget periods.

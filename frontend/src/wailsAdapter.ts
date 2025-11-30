@@ -24,10 +24,12 @@ export const GetTransactions = call('GetTransactions');
 export const GetCategories = call('GetCategories');
 export const AddCategory = call('AddCategory');
 export const AddAccount = call('AddAccount');
+export const DeleteAccount = call('DeleteAccount');
 export const AddTransaction = call('AddTransaction');
 
 export const GetBudgetPeriods = call('GetBudgetPeriods');
 export const AddBudgetPeriod = call('AddBudgetPeriod');
+export const UpdateBudgetPeriod = call('UpdateBudgetPeriod');
 
 export const GetBudgetAllocationsByBudgetPeriodID = call('GetBudgetAllocationsByBudgetPeriodID');
 export const AddBudgetAllocation = call('AddBudgetAllocation');

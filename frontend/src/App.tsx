@@ -8,6 +8,7 @@ import AccountsPage from './pages/AccountsPage';
 import BudgetPage from './pages/BudgetPage';
 import CategoriesPage from './pages/CategoriesPage';
 import DashboardPage from './pages/DashboardPage';
+import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 import TransactionsPage from './pages/TransactionsPage';
 import WelcomePage from './pages/WelcomePage';
@@ -55,6 +56,8 @@ function App() {
                 return <TransactionsPage />;
             case 'Budgets':
                 return <BudgetPage />;
+            case 'Reports':
+                return <ReportsPage />;
             case 'Settings':
                 return <SettingsPage />;
             default:

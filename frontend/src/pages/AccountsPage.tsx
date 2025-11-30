@@ -1,10 +1,21 @@
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Banknote, Building, CreditCard, Plus, Wallet } from 'lucide-react';
+import { formatMoney } from '@/lib/utils';
+import { Banknote, Building, CreditCard, Plus, Trash2, Wallet } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { models } from '../../wailsjs/go/models';
 import AddAccountForm from '../components/AddAccountForm';
-import { GetAccounts } from '../wailsAdapter';
+import { DeleteAccount, GetAccounts } from '../wailsAdapter';
 
 type Account = models.Account;
 
@@ -13,6 +24,7 @@ const AccountsPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [showAddForm, setShowAddForm] = useState<boolean>(false);
+    const [accountToDelete, setAccountToDelete] = useState<number | null>(null);
 
     const fetchAccounts = useCallback(async () => {
         setIsLoading(true);
@@ -35,6 +47,19 @@ const AccountsPage: React.FC = () => {
     const handleAccountAdded = () => {
         fetchAccounts();
         setShowAddForm(false);
+    };
+
+    const confirmDeleteAccount = async () => {
+        if (accountToDelete === null) return;
+        try {
+            await DeleteAccount(accountToDelete);
+            fetchAccounts();
+        } catch (err: any) {
+            console.error("Error deleting account:", err);
+            setError(err.message || 'Failed to delete account');
+        } finally {
+            setAccountToDelete(null);
+        }
     };
 
     const getAccountIcon = (type: string) => {
@@ -78,7 +103,7 @@ const AccountsPage: React.FC = () => {
                     <p className="text-muted-foreground">Loading accounts...</p>
                 </div>
             )}
-            
+
             {error && (
                 <div className="p-4 mb-6 text-sm text-destructive bg-destructive/10 rounded-md">
                     Error: {error}
@@ -103,12 +128,22 @@ const AccountsPage: React.FC = () => {
             {!isLoading && !error && accounts.length > 0 && (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {accounts.map((account) => (
-                        <Card key={account.id} className="overflow-hidden transition-all hover:shadow-md">
+                        <Card key={account.id} className="overflow-hidden transition-all hover:shadow-md group">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-muted/30">
-                                <CardTitle className="text-sm font-medium">
-                                    {account.type}
-                                </CardTitle>
-                                {getAccountIcon(account.type)}
+                                <div className="flex items-center gap-2">
+                                    {getAccountIcon(account.type)}
+                                    <CardTitle className="text-sm font-medium">
+                                        {account.type}
+                                    </CardTitle>
+                                </div>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={() => setAccountToDelete(account.id)}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
                             </CardHeader>
                             <CardContent className="pt-4">
                                 <div className="text-2xl font-bold truncate" title={account.name}>
@@ -117,19 +152,37 @@ const AccountsPage: React.FC = () => {
                                 <div className="mt-4 flex items-center justify-between">
                                     <div className="text-sm text-muted-foreground">Current Balance</div>
                                     <div className={`text-lg font-semibold ${account.currentBalance < 0 ? 'text-destructive' : 'text-primary'}`}>
-                                        ${account.currentBalance.toFixed(2)}
+                                        ${formatMoney(account.currentBalance)}
                                     </div>
                                 </div>
                                 <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-                                    <span>Initial: ${account.initialBalance.toFixed(2)}</span>
+                                    <span>Initial: ${formatMoney(account.initialBalance)}</span>
                                 </div>
                             </CardContent>
                         </Card>
                     ))}
                 </div>
             )}
+
+            <AlertDialog open={!!accountToDelete} onOpenChange={(open) => !open && setAccountToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the account and
+                            <strong> ALL associated transactions</strong>.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setAccountToDelete(null)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDeleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Delete Account
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };
 
-export default AccountsPage; 
+export default AccountsPage;

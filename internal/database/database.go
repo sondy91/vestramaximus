@@ -301,7 +301,35 @@ func GetAccounts() ([]models.Account, error) {
 	return accounts, nil
 }
 
-// // TODO: Add functions for UpdateAccount, DeleteAccount, GetAccountByID later
+// DeleteAccount deletes an account by its ID.
+func DeleteAccount(id int64) error {
+	db := GetDB()
+	stmt, err := db.Prepare("DELETE FROM accounts WHERE id = ?")
+	if err != nil {
+		log.Printf("Error preparing delete account statement: %v", err)
+		return err
+	}
+	defer stmt.Close()
+
+	res, err := stmt.Exec(id)
+	if err != nil {
+		log.Printf("Error executing delete account statement for ID %d: %v", id, err)
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		log.Printf("Error getting rows affected for delete account ID %d: %v", id, err)
+	}
+	if rowsAffected == 0 {
+		log.Printf("No account found with ID %d to delete.", id)
+	}
+
+	log.Printf("Account ID %d deleted successfully.", id)
+	return nil
+}
+
+// // TODO: Add functions for UpdateAccount, GetAccountByID later
 
 // AddCategory inserts a new category into the database.
 func AddCategory(category models.Category) (models.Category, error) {
@@ -511,6 +539,18 @@ func GetTransactions() ([]models.Transaction, error) {
 	return transactions, nil
 }
 
+// GetTransactionCountByAccountID returns the number of transactions associated with an account.
+func GetTransactionCountByAccountID(accountID int64) (int, error) {
+	db := GetDB()
+	row := db.QueryRow("SELECT COUNT(1) FROM transactions WHERE account_id = ?", accountID)
+	var count int
+	if err := row.Scan(&count); err != nil {
+		log.Printf("Error counting transactions for account ID %d: %v", accountID, err)
+		return 0, err
+	}
+	return count, nil
+}
+
 // // TODO: Add functions for UpdateTransaction, DeleteTransaction, GetTransactionByID later
 // // Note: Deleting/Updating transactions will also require updating account balance in reverse/differentially.
 
@@ -599,40 +639,64 @@ func GetBudgetPeriods() ([]models.BudgetPeriod, error) {
 	return periods, nil
 }
 
-// // TODO: Add functions for UpdateBudgetPeriod, DeleteBudgetPeriod, GetBudgetPeriodByID later
+// UpdateBudgetPeriod updates an existing budget period.
+func UpdateBudgetPeriod(period models.BudgetPeriod) (models.BudgetPeriod, error) {
+	db := GetDB()
+	// Format time for SQLite (YYYY-MM-DD HH:MM:SS)
+	startDateStr := period.StartDate.UTC().Format("2006-01-02 15:04:05")
+	endDateStr := period.EndDate.UTC().Format("2006-01-02 15:04:05")
+
+	stmt, err := db.Prepare("UPDATE budget_periods SET name = ?, start_date = ?, end_date = ? WHERE id = ?")
+	if err != nil {
+		log.Printf("Error preparing update budget period statement: %v", err)
+		return models.BudgetPeriod{}, err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(period.Name, startDateStr, endDateStr, period.ID)
+	if err != nil {
+		log.Printf("Error executing update budget period statement for ID %d: %v", period.ID, err)
+		return models.BudgetPeriod{}, err
+	}
+
+	log.Printf("Budget period ID %d updated successfully.", period.ID)
+	return period, nil
+}
+
+// // TODO: Add functions for DeleteBudgetPeriod, GetBudgetPeriodByID later
 
 // CountBudgetAllocations returns the number of allocations for a budget period.
 func CountBudgetAllocations(budgetPeriodID int64) (int, error) {
-    db := GetDB()
-    row := db.QueryRow("SELECT COUNT(1) FROM budget_allocations WHERE budget_period_id = ?", budgetPeriodID)
-    var cnt int
-    if err := row.Scan(&cnt); err != nil {
-        log.Printf("Error counting budget allocations for period ID %d: %v", budgetPeriodID, err)
-        return 0, err
-    }
-    return cnt, nil
+	db := GetDB()
+	row := db.QueryRow("SELECT COUNT(1) FROM budget_allocations WHERE budget_period_id = ?", budgetPeriodID)
+	var cnt int
+	if err := row.Scan(&cnt); err != nil {
+		log.Printf("Error counting budget allocations for period ID %d: %v", budgetPeriodID, err)
+		return 0, err
+	}
+	return cnt, nil
 }
 
 // UpdateBudgetPeriodStatus updates the status of a budget period.
 func UpdateBudgetPeriodStatus(budgetPeriodID int64, status string) error {
-    db := GetDB()
-    stmt, err := db.Prepare("UPDATE budget_periods SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
-    if err != nil {
-        log.Printf("Error preparing update budget period status statement: %v", err)
-        return err
-    }
-    defer stmt.Close()
+	db := GetDB()
+	stmt, err := db.Prepare("UPDATE budget_periods SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+	if err != nil {
+		log.Printf("Error preparing update budget period status statement: %v", err)
+		return err
+	}
+	defer stmt.Close()
 
-    res, err := stmt.Exec(status, budgetPeriodID)
-    if err != nil {
-        log.Printf("Error executing update budget period status for ID %d: %v", budgetPeriodID, err)
-        return err
-    }
-    if n, _ := res.RowsAffected(); n == 0 {
-        log.Printf("No budget period found with ID %d to update status.", budgetPeriodID)
-        // Not treating as hard error; caller may decide
-    }
-    return nil
+	res, err := stmt.Exec(status, budgetPeriodID)
+	if err != nil {
+		log.Printf("Error executing update budget period status for ID %d: %v", budgetPeriodID, err)
+		return err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		log.Printf("No budget period found with ID %d to update status.", budgetPeriodID)
+		// Not treating as hard error; caller may decide
+	}
+	return nil
 }
 
 // AddBudgetAllocation inserts a new budget allocation into the database.
@@ -770,7 +834,7 @@ func DeleteBudgetAllocation(id int64) error {
 // WARNING: This is destructive and cannot be undone.
 func ClearAllData() error {
 	db := GetDB()
-	
+
 	// Delete in order to respect foreign key constraints
 	tables := []string{
 		"budget_allocations",
@@ -780,7 +844,7 @@ func ClearAllData() error {
 		"accounts",
 		"envelopes",
 	}
-	
+
 	for _, table := range tables {
 		stmt := fmt.Sprintf("DELETE FROM %s", table)
 		_, err := db.Exec(stmt)
@@ -790,7 +854,7 @@ func ClearAllData() error {
 		}
 		log.Printf("Cleared table: %s", table)
 	}
-	
+
 	log.Println("All data cleared successfully")
 	return nil
 }
