@@ -66,9 +66,19 @@
         --chart-5: 340 75% 55%;
     }
 
-    html {
+    html,
+    body,
+    #root {
         height: 100%;
         background-color: rgba(27, 38, 54, 1);
+        cursor: default !important;
+    }
+
+    button,
+    a,
+    .btn,
+    [role="button"] {
+        cursor: pointer !important;
     }
 
     body {
