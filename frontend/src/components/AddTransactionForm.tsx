@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
+import { formatMoney } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { models } from '../../wailsjs/go/models';
@@ -27,7 +28,7 @@ interface TransactionFormData {
     status: 'Cleared' | 'Pending';
 }
 
-const AddTransactionForm: React.FC<AddTransactionFormProps> = ({ 
+const AddTransactionForm: React.FC<AddTransactionFormProps> = ({
     onTransactionAdded,
     categories: propCategories,
     accounts: propAccounts
@@ -88,8 +89,8 @@ const AddTransactionForm: React.FC<AddTransactionFormProps> = ({
         // If current categoryID is not in the filtered list, reset it
         if (formData.categoryID && !currentTypeCategories.find(cat => cat.id.toString() === formData.categoryID)) {
             setFormData(prev => ({ ...prev, categoryID: currentTypeCategories.length > 0 ? currentTypeCategories[0].id.toString() : "" }));
-        } else if (!formData.categoryID && currentTypeCategories.length > 0){
-             setFormData(prev => ({ ...prev, categoryID: currentTypeCategories[0].id.toString() }));
+        } else if (!formData.categoryID && currentTypeCategories.length > 0) {
+            setFormData(prev => ({ ...prev, categoryID: currentTypeCategories[0].id.toString() }));
         }
     }, [formData.type, categories, formData.categoryID]);
 
@@ -225,7 +226,7 @@ const AddTransactionForm: React.FC<AddTransactionFormProps> = ({
                     <Select id="accountID" name="accountID" value={formData.accountID} onChange={handleInputChange} required>
                         <option value="">-- Select Account --</option>
                         {accounts.map(acc => (
-                            <option key={acc.id} value={acc.id.toString()}>{acc.name} (${acc.currentBalance.toFixed(2)})</option>
+                            <option key={acc.id} value={acc.id.toString()}>{acc.name} (${formatMoney(acc.currentBalance)})</option>
                         ))}
                     </Select>
                 </div>
@@ -239,7 +240,7 @@ const AddTransactionForm: React.FC<AddTransactionFormProps> = ({
                         ))}
                     </Select>
                     {categories.length > 0 && filteredCategories.length === 0 && formData.type && (
-                         <p className="text-xs text-orange-500 mt-1">No {formData.type.toLowerCase()} categories available.</p>
+                        <p className="text-xs text-orange-500 mt-1">No {formData.type.toLowerCase()} categories available.</p>
                     )}
                 </div>
             </div>

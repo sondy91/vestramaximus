@@ -1,13 +1,14 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
+import { formatMoney } from '@/lib/utils';
 import { ArrowDownLeft, ArrowUpRight, Plus } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { models } from '../../wailsjs/go/models';
@@ -83,7 +84,7 @@ const TransactionsPage: React.FC = () => {
       {showAddForm && (
         <Card className="mb-8 border-primary/20 bg-primary/5">
           <CardContent className="pt-6">
-            <AddTransactionForm 
+            <AddTransactionForm
               onTransactionAdded={handleTransactionAdded}
               categories={categories}
               accounts={accounts}
@@ -99,7 +100,7 @@ const TransactionsPage: React.FC = () => {
         <CardContent>
           {isLoading && <p className="text-muted-foreground">Loading transactions...</p>}
           {error && <p className="text-destructive">Error: {error}</p>}
-          
+
           {!isLoading && !error && transactions.length === 0 && (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">No transactions found.</p>
@@ -130,7 +131,7 @@ const TransactionsPage: React.FC = () => {
                     <TableCell className={`text-right font-medium ${tx.amount < 0 ? 'text-destructive' : 'text-green-600'}`}>
                       <div className="flex items-center justify-end gap-1">
                         {tx.amount < 0 ? <ArrowDownLeft className="h-3 w-3" /> : <ArrowUpRight className="h-3 w-3" />}
-                        ${Math.abs(tx.amount).toFixed(2)}
+                        ${formatMoney(Math.abs(tx.amount))}
                       </div>
                     </TableCell>
                   </TableRow>

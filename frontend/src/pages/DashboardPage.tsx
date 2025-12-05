@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { getOnboardingData } from '@/lib/onboarding';
+import { formatMoney } from '@/lib/utils';
 import { GetBudgetAllocationsByBudgetPeriodID, GetBudgetPeriods, GetCategories, GetTransactions, UpdateBudgetAllocation } from '@/wailsAdapter';
 import { models } from '../../wailsjs/go/models';
 
@@ -208,7 +209,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${totalAllocated.toFixed(2)}
+              ${formatMoney(totalAllocated)}
             </div>
             <p className="text-xs text-muted-foreground">
               Across {envelopeCount} envelope{envelopeCount !== 1 ? 's' : ''}
@@ -235,7 +236,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalIncome.toFixed(2)}</div>
+            <div className="text-2xl font-bold">${formatMoney(totalIncome)}</div>
             <p className="text-xs text-muted-foreground">
               Total income recorded
             </p>
@@ -248,7 +249,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
             <TrendingDown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalExpenses.toFixed(2)}</div>
+            <div className="text-2xl font-bold">${formatMoney(totalExpenses)}</div>
             <p className="text-xs text-muted-foreground">
               Total expenses recorded
             </p>
@@ -285,8 +286,8 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
                             <span className="text-sm text-muted-foreground">Not Allocated</span>
                           ) : (
                             <>
-                              <span className="text-sm font-medium">${spent.toFixed(2)}</span>
-                              <span className="text-sm text-muted-foreground"> / ${allocation.allocatedAmount.toFixed(2)}</span>
+                              <span className="text-sm font-medium">${formatMoney(spent)}</span>
+                              <span className="text-sm text-muted-foreground"> / ${formatMoney(allocation.allocatedAmount)}</span>
                             </>
                           )}
                         </div>
@@ -310,7 +311,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
                           </div>
                           <div className="flex justify-between text-xs text-muted-foreground">
                             <span>{percentage.toFixed(0)}% Used</span>
-                            <span>${remaining.toFixed(2)} Remaining</span>
+                            <span>${formatMoney(remaining)} Remaining</span>
                           </div>
                         </>
                       )}

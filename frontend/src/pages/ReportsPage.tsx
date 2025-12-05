@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatMoney } from '@/lib/utils';
 import { GetCategories, GetTransactions } from '@/wailsAdapter';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -156,7 +157,7 @@ export default function ReportsPage() {
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
-                                    <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
+                                    <Tooltip formatter={(value: number) => `$${formatMoney(value)}`} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
